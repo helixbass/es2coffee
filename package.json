@@ -1,0 +1,27 @@
+{
+  "name": "es2coffee",
+  "version": "0.0.0-development",
+  "description": "Convert ES6+ code to Coffeescript",
+  "bin": {
+    "es2coffee": "./bin/es2coffee.js"
+  },
+  "main": "build",
+  "repository": "https://github.com/helixbass/es2coffee",
+  "author": "Julian Rosse <@helixbass>",
+  "license": "MIT",
+  "keywords": [
+    "coffeescript"
+  ],
+  "dependencies": {
+    "@babel/core": "^7.0.0-beta.46",
+    "babylon": "^7.0.0-beta.46",
+    "coffeescript": "../coffeescript_orig/",
+    "lodash": "^4.17.10",
+    "prettier": "helixbass/prettier#5f9759e",
+    "prettier-plugin-coffeescript": "../prettier-plugin-coffeescript/"
+  },
+  "scripts": {
+    "build": "coffee -o build/ -c src",
+    "watch": "coffee --watch -o build/ -c src"
+  }
+}
