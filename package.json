@@ -17,7 +17,7 @@
     "babylon": "^7.0.0-beta.46",
     "coffeescript": "../coffeescript_orig/",
     "lodash": "^4.17.10",
-    "prettier": "helixbass/prettier#5f9759e",
+    "prettier": "helixbass/prettier#a19423af5",
     "prettier-plugin-coffeescript": "../prettier-plugin-coffeescript/"
   },
   "scripts": {

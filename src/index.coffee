@@ -33,7 +33,8 @@ transformer = ({types: t}) ->
     yes
 
   couldBeMergedIn = ({operator, left, right}) ->
-    t.isBinaryExpression(left, operator: 'in') and t.isArrayExpression(left.right) and t.isBinaryExpression(right, operator: '===') and isSameExpression left.left, right.left
+    return no unless operator is 'or'
+    t.isBinaryExpression(left, operator: 'in') and t.isArrayExpression(left.right) and t.isBinaryExpression(right, operator: 'is') and isSameExpression left.left, right.left
 
   findFirstIdentifierUseInMemberExpression =
     Identifier: (path) ->
@@ -136,6 +137,11 @@ transformer = ({types: t}) ->
       if not alternate and t.isBlockStatement(consequent) and consequent.body.length is 1 and t.isReturnStatement(consequent.body[0])
         node.postfix = yes
         node.consequent = consequent.body[0]
+    ConditionalExpression: (path) ->
+      {node: {test}, node} = path
+      if t.isUnaryExpression test, operator: '!'
+        node.test = test.argument
+        node.inverted = yes
     BooleanLiteral: (path) ->
       {node} = path
       node.name =
@@ -160,6 +166,7 @@ transform = (input) ->
     parserOpts:
       ranges: yes
 
+  # dump {transformed}
   prettier.__debug.formatAST transformed,
     parser: 'coffeescript'
     originalText: input

@@ -1,1 +1,14 @@
 - avoid coffee-only keywords eg var named no
+- ==/!= - convert == null to ?
+- suck up multiple conditional assignment paths? eg:
+  if a
+    b = c
+  else
+    b = d
+  into:
+  b =
+    if a
+      c
+    else
+      d
+- transform if a isnt b to unless a is b
