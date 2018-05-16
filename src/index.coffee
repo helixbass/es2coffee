@@ -20,21 +20,25 @@ transformer = ({types: t}) ->
   isSameIdentifier = (a, b) ->
     t.isIdentifier(a) and t.isIdentifier(b) and a.name is b.name
 
-  isSameExpression = (a, b) ->
-    return yes if isSameIdentifier a, b
-    return yes if t.isMemberExpression(a) and t.isMemberExpression(b) and isSameIdentifier(a.object, b.object) and isSameIdentifier a.property, b.property
-    no
+  isSameMemberExpression = (first, second) ->
+    a = first
+    b = second
+    loop
+      return yes if isSameIdentifier a, b
+      return no unless t.isMemberExpression(a) and t.isMemberExpression(b) and isSameIdentifier(a.property, b.property) and a.computed is b.computed
+      a = a.object
+      b = b.object
 
   couldBeIn = ({operator, left, right}) ->
     return no unless operator is 'or'
     return no unless t.isBinaryExpression(left, operator: '===') and t.isBinaryExpression right, operator: '==='
     # return no unless t.isStringLiteral(left.right) and t.isStringLiteral right.right
-    return no unless isSameExpression left.left, right.left
+    return no unless isSameMemberExpression left.left, right.left
     yes
 
   couldBeMergedIn = ({operator, left, right}) ->
     return no unless operator is 'or'
-    t.isBinaryExpression(left, operator: 'in') and t.isArrayExpression(left.right) and t.isBinaryExpression(right, operator: 'is') and isSameExpression left.left, right.left
+    t.isBinaryExpression(left, operator: 'in') and t.isArrayExpression(left.right) and t.isBinaryExpression(right, operator: 'is') and isSameMemberExpression left.left, right.left
 
   findFirstIdentifierUseInMemberExpression =
     Identifier: (path) ->
