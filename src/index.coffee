@@ -163,6 +163,16 @@ transformer = ({types: t}) ->
           init
           t.whileStatement test, body
         ]
+    ObjectMethod: (path) ->
+      {node: {key, computed, params, body}} = path
+
+      path.replaceWith(
+        t.objectProperty(
+          key
+          t.functionExpression null, params, body
+          computed
+        )
+      )
     ReturnStatement: (path) ->
       {node: {argument}, node, parentPath} = path
 
@@ -224,6 +234,12 @@ transformer = ({types: t}) ->
           delimiter: '///'
           flags: ''
 
+# TODO: refine a lot
+transformCommentValue = (value) ->
+  value
+  .replace /\n\s*\*/g, "\n#"
+  .replace /\n\s*$/, "\n"
+
 transform = (input) ->
   # ast = babylon.parse input, sourceType: 'module', ranges: yes
   {ast: transformed} = babel.transform input,
@@ -234,7 +250,15 @@ transform = (input) ->
       ranges: yes
 
   # dump {transformed}
-  prettier.__debug.formatAST transformed,
+  if transformed.comments # TODO: figure out where/why this actually should happen
+    transformed.comments =
+      for comment in transformed.comments
+        {
+          ...comment
+          range: [comment.start, comment.end]
+          value: transformCommentValue comment.value
+        }
+  prettier.__debug.attachCommentsAndFormatAST transformed,
     parser: 'coffeescript'
     originalText: input
     bracketSpacing: no
