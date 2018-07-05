@@ -9,9 +9,7 @@
   "repository": "https://github.com/helixbass/es2coffee",
   "author": "Julian Rosse <@helixbass>",
   "license": "MIT",
-  "keywords": [
-    "coffeescript"
-  ],
+  "keywords": ["coffeescript"],
   "dependencies": {
     "@babel/core": "^7.0.0-beta.46",
     "babylon": "^7.0.0-beta.46",
@@ -22,6 +20,13 @@
   },
   "scripts": {
     "build": "coffee -o build/ -c src",
-    "watch": "coffee --watch -o build/ -c src"
+    "watch": "coffee --watch -o build/ -c src",
+    "lint": "eslint src/*.coffee src/*/*.coffee",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "eslint": "^5.0.1",
+    "eslint-plugin-coffee": "file:../eslint-plugin-coffee",
+    "jest": "^23.3.0"
   }
 }

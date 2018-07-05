@@ -85,35 +85,30 @@ transformer = ({types: t}) ->
     return no unless operator is 'or'
     t.isBinaryExpression(right, operator: 'in') and t.isArrayExpression(right.right) and isEquality(left) and isSameMemberExpression left.left, right.left
 
-  findFirstIdentifierUseInMemberExpression =
-    Identifier: (path) ->
-      {node: {name}, node, parent, key} = path
-      return unless name is @name and t.isMemberExpression(parent) and key is 'object'
-      @found.push parent
-      path.stop()
-  findFirstMemberExpressionUseInMemberExpression =
-    MemberExpression: (path) ->
-      {node: {object, property}, node, parent, key} = path
-      return unless t.isIdentifier(object) and object.name is @memberExpr.object.name and t.isIdentifier(property) and property.name is @memberExpr.property.name and t.isMemberExpression(parent) and key is 'object'
-      @found.push parent
-      path.stop()
   guardingAnd = (path) ->
     {node: {operator, left, right}} = path
-    return no unless operator is 'and' and t.isIdentifier(left) or t.isMemberExpression(left) and t.isIdentifier(left.object) and t.isIdentifier(left.property)
+    return no unless operator is 'and' and (isIdentifier=t.isIdentifier(left)) or t.isMemberExpression(left)
+    current = right
+    parent = null
+    found = no
+    loop
+      nextParent = current
+      switch current.type
+        when 'Identifier', 'MemberExpression'
+          if isSameMemberExpression left, current
+            return no unless parent
+            found = yes
+          return no if current.type is 'Identifier' and not found
+          current = current.object
+        when 'CallExpression'
+          current = current.callee
+        else
+          return no
+      if found
+        parent.optional = yes
+        return yes
+      parent = nextParent
     found = []
-    path.get('right').traverse(
-      (if t.isIdentifier left
-        {name} = left
-        [findFirstIdentifierUseInMemberExpression, {name, found}]
-      else
-        [findFirstMemberExpressionUseInMemberExpression, {memberExpr: left, found}]
-      )...
-    )
-    if found.length
-      [found] = found
-      found.optional = yes
-      return yes
-    no
   notToUnless = (node) ->
     {test} = node
     if t.isUnaryExpression test, operator: '!'
@@ -129,7 +124,9 @@ transformer = ({types: t}) ->
       assigns =
         declarations
         .filter ({init}) -> init
-        .map ({id, init}) -> t.expressionStatement t.assignmentExpression '=', id, init
+        .map (node) ->
+          {id, init} = node
+          withLocation(node) t.expressionStatement t.assignmentExpression '=', id, init
       path.replaceWithMultiple assigns
     FunctionDeclaration: (path) ->
       {node: {id, params, body, generator, async}} = path
@@ -233,6 +230,11 @@ transformer = ({types: t}) ->
           interpolatedPattern: templateLiteral
           delimiter: '///'
           flags: ''
+
+withLocation = (node) -> (newNode) ->
+  for field in ['loc', 'start', 'end', 'range']
+    newNode[field] ?= node[field]
+  newNode
 
 # TODO: refine a lot
 transformCommentValue = (value) ->

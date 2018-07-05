@@ -1,0 +1,6 @@
+plugins:
+  - coffee
+extends:
+  - plugin:coffee/all
+rules:
+  prefer-destructuring: [error, {object: true}]
