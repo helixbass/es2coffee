@@ -13,4 +13,5 @@
       d
 - transform if a isnt b to unless a is b
 - a && (a.b || a.c) -> a?.b || a.c isn't safe, needs to distribute ?
-- remove unnecessary explicit returns?
+- remove unnecessary explicit returns? eg trailing switch's cases
+- detect when should generate => rather than -> (arrow function that references this?)

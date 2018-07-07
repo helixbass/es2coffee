@@ -4,3 +4,5 @@ extends:
   - plugin:coffee/all
 rules:
   prefer-destructuring: [error, {object: true}]
+  # no-underscore-dangle: error
+  no-eval: error

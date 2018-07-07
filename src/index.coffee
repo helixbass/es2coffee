@@ -129,18 +129,18 @@ transformer = ({types: t}) ->
           withLocation(node) t.expressionStatement t.assignmentExpression '=', id, init
       path.replaceWithMultiple assigns
     FunctionDeclaration: (path) ->
-      {node: {id, params, body, generator, async}} = path
+      {node: {id, params, body, generator, async}, node} = path
       path.replaceWith(
-        t.assignmentExpression(
+        withLocation(node) t.expressionStatement withLocation(node) t.assignmentExpression(
           '='
           id
-          t.functionExpression null, params, body, generator, async
+          withLocation(node, after: id) t.functionExpression null, params, body, generator, async
         )
       )
     ArrowFunctionExpression: (path) ->
-      {node: {params, body, generator, async}} = path
+      {node: {params, body, generator, async}, node} = path
       path.replaceWith(
-        t.functionExpression null, params,
+        withLocation(node) t.functionExpression null, params,
           if t.isBlockStatement body
             body
           else
@@ -148,25 +148,25 @@ transformer = ({types: t}) ->
           generator, async
       )
     ForStatement: (path) ->
-      {node: {init, test, update, body}} = path
+      {node: {init, test, update, body}, node} = path
 
       path.get('body').pushContainer 'body', t.expressionStatement update
       unless init
         path.replaceWith(
-          t.whileStatement test, body
+          withLocation(node) t.whileStatement test, body
         )
       else
         path.replaceWithMultiple [
           init
-          t.whileStatement test, body
+          withLocation(node) t.whileStatement test, body
         ]
     ObjectMethod: (path) ->
-      {node: {key, computed, params, body}} = path
+      {node: {key, computed, params, body}, node} = path
 
       path.replaceWith(
-        t.objectProperty(
+        withLocation(node) t.objectProperty(
           key
-          t.functionExpression null, params, body
+          withLocation(node) t.functionExpression null, params, body
           computed
         )
       )
@@ -175,7 +175,7 @@ transformer = ({types: t}) ->
 
       if parentPath.isBlockStatement() and parentPath.parentPath.isFunction()
         if node is parentPath.node.body[parentPath.node.body.length - 1]
-          path.replaceWith argument
+          path.replaceWith withLocation(argument) t.expressionStatement argument
     BinaryExpression: (path) ->
       {node: {operator}, node} = path
       node.operator = 'is' if operator is '==='
@@ -186,15 +186,15 @@ transformer = ({types: t}) ->
         node.operator = 'and' if operator is '&&'
         node.operator = operator = 'or' if operator is '||'
         if couldBeIn node
-          return path.replaceWith t.BinaryExpression 'in', left.left, t.ArrayExpression [left.right, right.right]
+          return path.replaceWith withLocation(node) t.BinaryExpression 'in', left.left, t.ArrayExpression [left.right, right.right]
         else if couldBeMergedIn node
-          path.replaceWith t.BinaryExpression 'in', left.left, t.ArrayExpression [left.right, right.right.elements...]
+          path.replaceWith withLocation(node) t.BinaryExpression 'in', left.left, t.ArrayExpression [left.right, right.right.elements...]
         else if isOr(left) and couldBeIn {operator, left: left.right, right}
-          return path.replaceWith t.LogicalExpression '||', # 'or',
+          return path.replaceWith withLocation(node) t.LogicalExpression '||', # 'or',
             left.left,
             t.BinaryExpression 'in', left.right.left, t.ArrayExpression [left.right.right, right.right]
         else if isOr(left) and couldBeMergedIn {operator, left: left.right, right}
-          return path.replaceWith t.LogicalExpression '||',
+          return path.replaceWith withLocation(node) t.LogicalExpression '||',
             left.left,
             t.BinaryExpression 'in', left.right.left, t.ArrayExpression [left.right.right, right.right.elements...]
         if guardingAnd path
@@ -223,17 +223,21 @@ transformer = ({types: t}) ->
       {node: {operator, argument}, node, parent} = path
       node.operator = 'not' if operator is '!' and not t.isUnaryExpression(argument, operator: '!') and not t.isUnaryExpression(parent, operator: '!')
     NewExpression: (path) ->
-      {node: {callee, arguments: args}} = path
+      {node: {callee, arguments: args}, node} = path
       if t.isIdentifier(callee, name: 'RegExp') and args.length is 1 and templateLiteral = additionToTemplateLiteral(args[0])
-        path.replaceWith
+        path.replaceWith withLocation(node)
           type: 'RegExpLiteral'
           interpolatedPattern: templateLiteral
           delimiter: '///'
           flags: ''
 
-withLocation = (node) -> (newNode) ->
+withLocation = (node, {after} = {}) -> (newNode) ->
   for field in ['loc', 'start', 'end', 'range']
     newNode[field] ?= node[field]
+  if after?.loc
+    newNode.start = after.end
+    newNode.range[0] = after.range[1]
+    newNode.loc.start = after.loc.end
   newNode
 
 # TODO: refine a lot
@@ -269,5 +273,13 @@ transform = (input) ->
 
 module.exports = {transform}
 
+resetLogColors = ->
+  {styles, colors} = require('util').inspect
+  colors.normal = [39, 39]
+  styles.string = 'yellow'
+  styles.number = 'normal'
+  styles.boolean = 'normal'
+  styles.null = 'normal'
+resetLogColors()
 dump = (args..., obj) ->
   console.log args..., require('util').inspect obj, no, null
