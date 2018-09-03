@@ -10,11 +10,11 @@
     esutils "^2.0.2"
     js-tokens "^3.0.0"
 
-"@babel/code-frame@7.0.0-beta.40":
-  version "7.0.0-beta.40"
-  resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.0.0-beta.40.tgz#37e2b0cf7c56026b4b21d3927cadf81adec32ac6"
+"@babel/code-frame@7.0.0-beta.46":
+  version "7.0.0-beta.46"
+  resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.0.0-beta.46.tgz#e0d002100805daab1461c0fcb32a07e304f3a4f4"
   dependencies:
-    "@babel/highlight" "7.0.0-beta.40"
+    "@babel/highlight" "7.0.0-beta.46"
 
 "@babel/code-frame@7.0.0-beta.51", "@babel/code-frame@^7.0.0-beta.35":
   version "7.0.0-beta.51"
@@ -80,9 +80,9 @@
     "@babel/traverse" "7.0.0-beta.51"
     "@babel/types" "7.0.0-beta.51"
 
-"@babel/highlight@7.0.0-beta.40":
-  version "7.0.0-beta.40"
-  resolved "https://registry.yarnpkg.com/@babel/highlight/-/highlight-7.0.0-beta.40.tgz#b43d67d76bf46e1d10d227f68cddcd263786b255"
+"@babel/highlight@7.0.0-beta.46":
+  version "7.0.0-beta.46"
+  resolved "https://registry.yarnpkg.com/@babel/highlight/-/highlight-7.0.0-beta.46.tgz#c553c51e65f572bdedd6eff66fc0bb563016645e"
   dependencies:
     chalk "^2.0.0"
     esutils "^2.0.2"
@@ -99,6 +99,10 @@
 "@babel/parser@7.0.0-beta.51":
   version "7.0.0-beta.51"
   resolved "https://registry.yarnpkg.com/@babel/parser/-/parser-7.0.0-beta.51.tgz#27cec2df409df60af58270ed8f6aa55409ea86f6"
+
+"@babel/parser@7.0.0-beta.55":
+  version "7.0.0-beta.55"
+  resolved "https://registry.yarnpkg.com/@babel/parser/-/parser-7.0.0-beta.55.tgz#0a527efc148c6c8cd85d5ffddacad817a2daeeb2"
 
 "@babel/template@7.0.0-beta.51":
   version "7.0.0-beta.51"
@@ -156,6 +160,10 @@
   resolved "https://registry.yarnpkg.com/@glimmer/wire-format/-/wire-format-0.30.5.tgz#17d79a320b931950ac03887733e56ecc7bbd0a06"
   dependencies:
     "@glimmer/util" "^0.30.5"
+
+"@iarna/toml@2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@iarna/toml/-/toml-2.0.0.tgz#7802115684397785b3b6dc8a3ba50e30d7a7422b"
 
 "@types/commander@^2.11.0":
   version "2.12.2"
@@ -525,10 +533,6 @@ babel-types@^6.0.0, babel-types@^6.18.0, babel-types@^6.23.0, babel-types@^6.26.
     lodash "^4.17.4"
     to-fast-properties "^1.0.3"
 
-babylon@7.0.0-beta.34:
-  version "7.0.0-beta.34"
-  resolved "https://registry.yarnpkg.com/babylon/-/babylon-7.0.0-beta.34.tgz#2ccdf97bb4fbc1617619a030a6c0390b2c8f16d6"
-
 babylon@7.0.0-beta.35:
   version "7.0.0-beta.35"
   resolved "https://registry.yarnpkg.com/babylon/-/babylon-7.0.0-beta.35.tgz#9f9e609ed50c28d4333f545b373a381b47e9e6ed"
@@ -775,7 +779,7 @@ code-point-at@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/code-point-at/-/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
 
-coffeescript@../coffeescript_orig/, "coffeescript@file:../coffeescript_orig":
+"coffeescript@file:../coffeescript_orig":
   version "2.3.1"
   dependencies:
     babel-eslint "^7.2.2"
@@ -873,6 +877,14 @@ cosmiconfig@3.1.0:
     js-yaml "^3.9.0"
     parse-json "^3.0.0"
     require-from-string "^2.0.1"
+
+cosmiconfig@5.0.6:
+  version "5.0.6"
+  resolved "https://registry.yarnpkg.com/cosmiconfig/-/cosmiconfig-5.0.6.tgz#dca6cf680a0bd03589aff684700858c81abeeb39"
+  dependencies:
+    is-directory "^0.3.1"
+    js-yaml "^3.9.0"
+    parse-json "^4.0.0"
 
 cross-spawn@^5.0.1, cross-spawn@^5.1.0:
   version "5.1.0"
@@ -1125,6 +1137,12 @@ eslint-config-prettier@^2.9.0:
   dependencies:
     get-stdin "^5.0.1"
 
+eslint-config-prettier@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-3.0.1.tgz#479214f64c1a4b344040924bfb97543db334b7b1"
+  dependencies:
+    get-stdin "^6.0.0"
+
 eslint-config-standard@^11.0.0:
   version "11.0.0"
   resolved "https://registry.yarnpkg.com/eslint-config-standard/-/eslint-config-standard-11.0.0.tgz#87ee0d3c9d95382dc761958cbb23da9eea31e0ba"
@@ -1149,6 +1167,7 @@ eslint-module-utils@^2.2.0:
     babel-eslint "^7.2.2"
     babylon "^7.0.0-beta.44"
     coffeescript "file:../../Library/Caches/Yarn/v1/coffeescript_orig"
+    eslint-scope "~3.7.3"
     lodash "^4.17.10"
 
 eslint-plugin-import@^2.9.0:
@@ -1175,6 +1194,13 @@ eslint-plugin-node@^6.0.1:
     resolve "^1.3.3"
     semver "^5.4.1"
 
+eslint-plugin-prettier@^2.6.2:
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-prettier/-/eslint-plugin-prettier-2.6.2.tgz#71998c60aedfa2141f7bfcbf9d1c459bf98b4fad"
+  dependencies:
+    fast-diff "^1.1.1"
+    jest-docblock "^21.0.0"
+
 eslint-plugin-promise@^3.7.0:
   version "3.8.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-promise/-/eslint-plugin-promise-3.8.0.tgz#65ebf27a845e3c1e9d6f6a5622ddd3801694b621"
@@ -1193,6 +1219,13 @@ eslint-scope@^3.7.1:
 eslint-scope@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/eslint-scope/-/eslint-scope-4.0.0.tgz#50bf3071e9338bcdc43331794a0cb533f0136172"
+  dependencies:
+    esrecurse "^4.1.0"
+    estraverse "^4.1.1"
+
+eslint-scope@~3.7.3:
+  version "3.7.3"
+  resolved "https://registry.yarnpkg.com/eslint-scope/-/eslint-scope-3.7.3.tgz#bb507200d3d17f60247636160b4826284b108535"
   dependencies:
     esrecurse "^4.1.0"
     estraverse "^4.1.1"
@@ -1428,6 +1461,10 @@ fast-deep-equal@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-2.0.1.tgz#7b05218ddf9667bf7f370bf7fdb2cb15fdd0aa49"
 
+fast-diff@^1.1.1:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/fast-diff/-/fast-diff-1.1.2.tgz#4b62c42b8e03de3f848460b639079920695d0154"
+
 fast-json-stable-stringify@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/fast-json-stable-stringify/-/fast-json-stable-stringify-2.0.0.tgz#d5142c0caee6b1189f87d3a76111064f86c8bbf2"
@@ -1515,9 +1552,9 @@ flow-parser@0.64.0:
   version "0.64.0"
   resolved "https://registry.yarnpkg.com/flow-parser/-/flow-parser-0.64.0.tgz#858664ef2246880f9a81b05e69fbd308a1b865c9"
 
-flow-parser@0.70:
-  version "0.70.0"
-  resolved "https://registry.yarnpkg.com/flow-parser/-/flow-parser-0.70.0.tgz#9c310187efe4380ba9a251284e9b83b95c49e857"
+flow-parser@0.78.0:
+  version "0.78.0"
+  resolved "https://registry.yarnpkg.com/flow-parser/-/flow-parser-0.78.0.tgz#4ec829a97fa68cff6e97691dfff7b6ddebbc187c"
 
 for-in@^1.0.2:
   version "1.0.2"
@@ -1594,6 +1631,10 @@ get-caller-file@^1.0.1:
 get-stdin@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/get-stdin/-/get-stdin-5.0.1.tgz#122e161591e21ff4c52530305693f20e6393a398"
+
+get-stdin@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/get-stdin/-/get-stdin-6.0.0.tgz#9e09bf712b360ab9225e812048f71fde9c89657b"
 
 get-stream@3.0.0, get-stream@^3.0.0:
   version "3.0.0"
@@ -2261,11 +2302,15 @@ jest-docblock@22.2.2:
   dependencies:
     detect-newline "^2.1.0"
 
-jest-docblock@^23.2.0:
+jest-docblock@23.2.0, jest-docblock@^23.2.0:
   version "23.2.0"
   resolved "https://registry.yarnpkg.com/jest-docblock/-/jest-docblock-23.2.0.tgz#f085e1f18548d99fdd69b20207e6fd55d91383a7"
   dependencies:
     detect-newline "^2.1.0"
+
+jest-docblock@^21.0.0:
+  version "21.2.0"
+  resolved "https://registry.yarnpkg.com/jest-docblock/-/jest-docblock-21.2.0.tgz#51529c3b30d5fd159da60c27ceedc195faf8d414"
 
 jest-each@^23.2.0:
   version "23.2.0"
@@ -2483,6 +2528,10 @@ js-tokens@^3.0.0, js-tokens@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-3.0.2.tgz#9866df395102130e38f7f996bceb65443209c25b"
 
+"js-tokens@^3.0.0 || ^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
+
 js-yaml@^3.10.0, js-yaml@^3.11.0, js-yaml@^3.7.0, js-yaml@^3.9.0, js-yaml@^3.9.1:
   version "3.12.0"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.12.0.tgz#eaed656ec8344f10f527c6bfa1b6e2244de167d1"
@@ -2625,6 +2674,14 @@ levn@^0.3.0, levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
+lines-and-columns@^1.1.6:
+  version "1.1.6"
+  resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.1.6.tgz#1c00c743b433cd0a4e80758f7b64a57440d9ff00"
+
+linguist-languages@6.2.1-dev.20180706:
+  version "6.2.1-dev.20180706"
+  resolved "https://registry.yarnpkg.com/linguist-languages/-/linguist-languages-6.2.1-dev.20180706.tgz#119766ff7e753654a06a6ae64364483458fa6664"
+
 load-json-file@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/load-json-file/-/load-json-file-1.1.0.tgz#956905708d58b4bab4c2261b04f59f31c99374c0"
@@ -2681,10 +2738,10 @@ longest@^1.0.1:
   resolved "https://registry.yarnpkg.com/longest/-/longest-1.0.1.tgz#30a0b2da38f73770e8294a0d22e6625ed77d0097"
 
 loose-envify@^1.0.0:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/loose-envify/-/loose-envify-1.3.1.tgz#d1a8ad33fa9ce0e713d65fdd0ac8b748d478c848"
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/loose-envify/-/loose-envify-1.4.0.tgz#71ee51fa7be4caec1a63839f7e682d8132d30caf"
   dependencies:
-    js-tokens "^3.0.0"
+    js-tokens "^3.0.0 || ^4.0.0"
 
 lru-cache@^3.2.0:
   version "3.2.0"
@@ -2898,6 +2955,10 @@ normalize-package-data@^2.3.2:
     is-builtin-module "^1.0.0"
     semver "2 || 3 || 4 || 5"
     validate-npm-package-license "^3.0.1"
+
+normalize-path@3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/normalize-path/-/normalize-path-3.0.0.tgz#0dcd69ff23a1c9b11fd0978316644a0388216a65"
 
 normalize-path@^2.1.1:
   version "2.1.1"
@@ -3209,11 +3270,11 @@ postcss-scss@1.0.2:
   dependencies:
     postcss "^6.0.3"
 
-postcss-scss@1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/postcss-scss/-/postcss-scss-1.0.5.tgz#40a10cfd03766accf0a3cf8e65a8af887b2bf6c4"
+postcss-scss@1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/postcss-scss/-/postcss-scss-1.0.6.tgz#ab903f3bb20161bc177896462293a53d4bff5f7a"
   dependencies:
-    postcss "^6.0.21"
+    postcss "^6.0.23"
 
 postcss-selector-parser@2.2.3:
   version "2.2.3"
@@ -3248,7 +3309,7 @@ postcss@^5.2.16:
     source-map "^0.5.6"
     supports-color "^3.2.3"
 
-postcss@^6.0.21, postcss@^6.0.3:
+postcss@^6.0.23, postcss@^6.0.3:
   version "6.0.23"
   resolved "https://registry.yarnpkg.com/postcss/-/postcss-6.0.23.tgz#61c82cc328ac60e677645f979054eb98bc0e3324"
   dependencies:
@@ -3267,15 +3328,16 @@ prettier-plugin-coffeescript@../prettier-plugin-coffeescript/:
     prettier "file:../../Library/Caches/Yarn/v1/prettier"
 
 prettier@../prettier, "prettier@file:../prettier":
-  version "1.12.1"
+  version "1.15.0-dev"
   dependencies:
-    "@babel/code-frame" "7.0.0-beta.40"
+    "@babel/code-frame" "7.0.0-beta.46"
+    "@babel/parser" "7.0.0-beta.55"
     "@glimmer/syntax" "0.30.3"
-    babylon "7.0.0-beta.34"
+    "@iarna/toml" "2.0.0"
     camelcase "4.1.0"
     chalk "2.1.0"
     cjk-regex "1.0.2"
-    cosmiconfig "3.1.0"
+    cosmiconfig "5.0.6"
     dashify "0.2.2"
     dedent "0.7.0"
     diff "3.2.0"
@@ -3286,34 +3348,37 @@ prettier@../prettier, "prettier@file:../prettier":
     esutils "2.0.2"
     find-parent-dir "0.3.0"
     find-project-root "1.1.1"
-    flow-parser "0.70"
+    flow-parser "0.78.0"
     get-stream "3.0.0"
     globby "6.1.0"
     graphql "0.13.2"
     html-tag-names "1.1.2"
     ignore "3.3.7"
-    jest-docblock "22.2.2"
+    jest-docblock "23.2.0"
     json-stable-stringify "1.0.1"
     leven "2.1.0"
+    linguist-languages "6.2.1-dev.20180706"
     lodash.uniqby "4.7.0"
     mem "1.1.0"
     minimatch "3.0.4"
     minimist "1.2.0"
+    normalize-path "3.0.0"
     parse5 "3.0.3"
     postcss-less "1.1.5"
     postcss-media-query-parser "0.2.3"
-    postcss-scss "1.0.5"
+    postcss-scss "1.0.6"
     postcss-selector-parser "2.2.3"
     postcss-values-parser "1.5.0"
-    remark-frontmatter "1.1.0"
     remark-parse "5.0.0"
     resolve "1.5.0"
     semver "5.4.1"
     string-width "2.1.1"
-    typescript "2.9.0-dev.20180421"
-    typescript-eslint-parser eslint/typescript-eslint-parser#2960b002746c01fb9cb15bb5f4c1e7e925c6519a
+    typescript "3.0.1"
+    typescript-eslint-parser "18.0.0"
     unicode-regex "1.0.1"
     unified "6.1.6"
+    yaml ikatyang/yaml#a765c1ee16d6b8a5e715564645f2b85f7e04828b
+    yaml-unist-parser ikatyang/yaml-unist-parser#cd4f73325b3fc02a6d17842d0d9cee0dfc729c9b
 
 "prettier@github:helixbass/prettier#just-format-ast":
   version "1.10.2"
@@ -4164,6 +4229,10 @@ trough@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/trough/-/trough-1.0.2.tgz#7f1663ec55c480139e2de5e486c6aef6cc24a535"
 
+tslib@^1.9.1:
+  version "1.9.3"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.9.3.tgz#d7e4dd79245d85428c4d7e4822a79917954ca286"
+
 tunnel-agent@^0.6.0:
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/tunnel-agent/-/tunnel-agent-0.6.0.tgz#27a5dea06b36b04a0a9966774b290868f0fc40fd"
@@ -4191,9 +4260,9 @@ typescript-eslint-parser@13.0.0:
     lodash.unescape "4.0.1"
     semver "5.5.0"
 
-typescript-eslint-parser@eslint/typescript-eslint-parser#2960b002746c01fb9cb15bb5f4c1e7e925c6519a:
-  version "14.0.0"
-  resolved "https://codeload.github.com/eslint/typescript-eslint-parser/tar.gz/2960b002746c01fb9cb15bb5f4c1e7e925c6519a"
+typescript-eslint-parser@18.0.0:
+  version "18.0.0"
+  resolved "https://registry.yarnpkg.com/typescript-eslint-parser/-/typescript-eslint-parser-18.0.0.tgz#3e5055a44980d69e4154350fc5d8b1ab4e2332a8"
   dependencies:
     lodash.unescape "4.0.1"
     semver "5.5.0"
@@ -4202,9 +4271,9 @@ typescript@2.7.0-insiders.20171214:
   version "2.7.0-insiders.20171214"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.7.0-insiders.20171214.tgz#841344ddae5f498a97c0435fcd12860480050e71"
 
-typescript@2.9.0-dev.20180421:
-  version "2.9.0-dev.20180421"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.9.0-dev.20180421.tgz#b937b164ce73f833f2ed5c36571e238898b264ce"
+typescript@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.0.1.tgz#43738f29585d3a87575520a4b93ab6026ef11fdb"
 
 uglify-js@^2.6:
   version "2.8.29"
@@ -4479,6 +4548,17 @@ yallist@^2.1.2:
 yallist@^3.0.0, yallist@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-3.0.2.tgz#8452b4bb7e83c7c188d8041c1a837c773d6d8bb9"
+
+yaml-unist-parser@ikatyang/yaml-unist-parser#cd4f73325b3fc02a6d17842d0d9cee0dfc729c9b:
+  version "1.0.0-rc.3"
+  resolved "https://codeload.github.com/ikatyang/yaml-unist-parser/tar.gz/cd4f73325b3fc02a6d17842d0d9cee0dfc729c9b"
+  dependencies:
+    lines-and-columns "^1.1.6"
+    tslib "^1.9.1"
+
+yaml@ikatyang/yaml#a765c1ee16d6b8a5e715564645f2b85f7e04828b:
+  version "1.0.0-rc.7"
+  resolved "https://codeload.github.com/ikatyang/yaml/tar.gz/a765c1ee16d6b8a5e715564645f2b85f7e04828b"
 
 yargs-parser@^9.0.2:
   version "9.0.2"

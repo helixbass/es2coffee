@@ -15,3 +15,14 @@
 - a && (a.b || a.c) -> a?.b || a.c isn't safe, needs to distribute ?
 - remove unnecessary explicit returns? eg trailing switch's cases
 - detect when should generate => rather than -> (arrow function that references this?)
+- try and detect when can use shorthand @arg (eg function body starts with this.arg = arg)
+  - would have to find other "bare" references and eg transform arg -> @arg there as well
+- class get/setters?
+- why is eslint/util/ast-utils.js failing?
+- don't remove break inside switch case if it would apply to a different eg loop
+- detect binding of method in constructor and convert to bound method
+- a = a or b -> a or= b
+- do while
+- remove break-only (default) switch case
+- don't generate postfix if when expression is something dangerous that would need parense (eg return () -> ... was generating incorrect/invalid code)
+- generate range from .slice()?

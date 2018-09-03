@@ -9,13 +9,14 @@
   "repository": "https://github.com/helixbass/es2coffee",
   "author": "Julian Rosse <@helixbass>",
   "license": "MIT",
-  "keywords": ["coffeescript"],
+  "keywords": [
+    "coffeescript"
+  ],
   "dependencies": {
     "@babel/core": "^7.0.0-beta.46",
     "babylon": "^7.0.0-beta.46",
-    "coffeescript": "../coffeescript_orig/",
     "lodash": "^4.17.10",
-    "prettier": "helixbass/prettier#a19423af5",
+    "prettier": "../prettier",
     "prettier-plugin-coffeescript": "../prettier-plugin-coffeescript/"
   },
   "scripts": {
@@ -26,7 +27,9 @@
   },
   "devDependencies": {
     "eslint": "^5.0.1",
+    "eslint-config-prettier": "^3.0.1",
     "eslint-plugin-coffee": "file:../eslint-plugin-coffee",
+    "eslint-plugin-prettier": "^2.6.2",
     "jest": "^23.3.0"
   }
 }

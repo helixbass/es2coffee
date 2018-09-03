@@ -1,8 +1,17 @@
 plugins:
   - coffee
+  - prettier
 extends:
   - plugin:coffee/all
 rules:
   prefer-destructuring: [error, {object: true}]
   # no-underscore-dangle: error
-  no-eval: error
+  # no-unreachable: error
+  no-unused-vars: error
+  no-undef: error
+  prettier/prettier: [error, {parser: coffeescript, pluginSearchDirs: [.]}]
+  # prettier/prettier: [error, {parser: coffeescript, pluginSearchDirs: [/Users/jrosse/.config/yarn/global]}]
+  # prettier/prettier: [error, {parser: coffeescript, pluginSearchDirs: [/Users/jrosse/prj/es2coffee]}]
+env:
+  node: true
+  jest: true
