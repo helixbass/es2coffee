@@ -144,11 +144,7 @@ transformer = ({types: t}) ->
       withLocation(node) {
         type: 'For'
         source: right
-        name:
-          if left.type is 'VariableDeclaration'
-            left.declarations[0].id
-          else
-            left
+        name: left
         style
         body
       }
@@ -156,7 +152,9 @@ transformer = ({types: t}) ->
 
   visitor: withNullReturnValues(
     VariableDeclaration: (path) ->
-      {node: {declarations}} = path
+      {node: {declarations}, parentPath} = path
+      if parentPath.node.type in ['ForInStatement', 'ForOfStatement']
+        return path.replaceWith declarations[0].id
       assigns = declarations
         .filter ({init}) -> init
         .map (node) ->
@@ -213,8 +211,10 @@ transformer = ({types: t}) ->
           init
           withLocation(node) t.whileStatement test, body
         ]
-    ForOfStatement: transformForInOf style: 'from'
-    ForInStatement: transformForInOf style: 'of'
+    ForOfStatement:
+      exit: transformForInOf(style: 'from')
+    ForInStatement:
+      exit: transformForInOf(style: 'of')
     ObjectMethod: (path) ->
       {node: {key, computed, params, body}, node} = path
 
