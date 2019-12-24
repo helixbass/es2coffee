@@ -174,7 +174,7 @@ transformer = ({types: t}) ->
         return path.replaceWith(
           withLocation(node)(
             t.exportNamedDeclaration(
-              t.assignmentExpression '=', id, init
+              withLocation(node) t.assignmentExpression '=', id, init
               specifiers
               source
             )
