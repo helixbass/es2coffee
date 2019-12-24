@@ -4,6 +4,8 @@ prettier = require 'prettier'
 {mapValues: fmapValues} = require 'lodash/fp'
 {assign: extend} = require 'lodash'
 
+{override: overrideBabelTypes} = require './override-babel-types'
+
 withNullReturnValues = fmapValues (f) ->
   if f.enter or f.exit
     enter: (...args) ->
@@ -150,7 +152,44 @@ transformer = ({types: t}) ->
       }
     )
 
+  getFunctionDeclarationAssignment = ({
+    node: {id, params, body, generator, async}
+    node
+  }) ->
+    withLocation(node)(
+      t.assignmentExpression(
+        '='
+        id
+        withLocation(node, after: id)(
+          t.functionExpression null, params, body, generator, async
+        )
+      )
+    )
+
   visitor: withNullReturnValues(
+    ExportNamedDeclaration: (path) ->
+      {node: {declaration, specifiers, source}, node} = path
+      if declaration?.type is 'VariableDeclaration'
+        {declarations: [{id, init}]} = declaration
+        return path.replaceWith(
+          withLocation(node)(
+            t.exportNamedDeclaration(
+              t.assignmentExpression '=', id, init
+              specifiers
+              source
+            )
+          )
+        )
+      if declaration?.type is 'FunctionDeclaration'
+        return path.replaceWith(
+          withLocation(node)(
+            t.exportNamedDeclaration(
+              getFunctionDeclarationAssignment node: declaration
+              specifiers
+              source
+            )
+          )
+        )
     VariableDeclaration: (path) ->
       {node: {declarations}, parentPath} = path
       if parentPath.node.type in ['ForInStatement', 'ForOfStatement']
@@ -166,20 +205,11 @@ transformer = ({types: t}) ->
           )
       path.replaceWithMultiple assigns
     FunctionDeclaration: (path) ->
-      {node: {id, params, body, generator, async}, node} = path
+      {node} = path
+
       path.replaceWith(
         withLocation(node)(
-          t.expressionStatement(
-            withLocation(node)(
-              t.assignmentExpression(
-                '='
-                id
-                withLocation(node, after: id)(
-                  t.functionExpression null, params, body, generator, async
-                )
-              )
-            )
-          )
+          t.expressionStatement getFunctionDeclarationAssignment {node}
         )
       )
     ArrowFunctionExpression: (path) ->
@@ -398,6 +428,7 @@ transformCommentValue = (value) ->
   value.replace(/\n\s*\*/g, '\n#').replace /\n\s*$/, '\n'
 
 transform = (input) ->
+  overrideBabelTypes()
   # ast = babylon.parse input, sourceType: 'module', ranges: yes
   # dump {ast}
   {ast: transformed} = babel.transform input,
