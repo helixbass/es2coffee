@@ -41,11 +41,10 @@ transformer = ({types: t}) ->
       next = expressions
       current = left
       loop
-        candidate =
-          if isAddition current
-            current.right
-          else
-            current
+        candidate = if isAddition current
+          current.right
+        else
+          current
         if next is expressions
           return no if t.isStringLiteral candidate
           expressions.unshift candidate
@@ -61,6 +60,7 @@ transformer = ({types: t}) ->
     t.templateLiteral(
       quasis.map (quasi, index) ->
         t.templateElement {raw: quasi.value}, index is lastQuasiIndex
+    ,
       expressions
     )
 
@@ -195,6 +195,7 @@ transformer = ({types: t}) ->
               withLocation(node)(
                 t.blockStatement [withLocation(node) t.expressionStatement body]
               )
+          ,
             generator
             async
           )
@@ -212,9 +213,9 @@ transformer = ({types: t}) ->
           withLocation(node) t.whileStatement test, body
         ]
     ForOfStatement:
-      exit: transformForInOf(style: 'from')
+      exit: transformForInOf style: 'from'
     ForInStatement:
-      exit: transformForInOf(style: 'of')
+      exit: transformForInOf style: 'of'
     ObjectMethod: (path) ->
       {node: {key, computed, params, body}, node} = path
 
@@ -329,19 +330,18 @@ transformer = ({types: t}) ->
       notToUnless node
     BooleanLiteral: (path) ->
       {node} = path
-      node.name =
-        if node.value
-          'yes'
-        else
-          'no'
+      node.name = if node.value
+        'yes'
+      else
+        'no'
     SwitchCase:
       enter: (path) ->
-        inSwitchCase = yes
+        inSwitchCase ###:### = yes
         {node: {consequent}, node} = path
         if consequent.length is 1 and t.isBlockStatement consequent[0]
           node.consequent = consequent[0].body
       exit: ->
-        inSwitchCase = no
+        inSwitchCase ###:### = no
     BreakStatement: (path) ->
       path.remove() if inSwitchCase
     UnaryExpression: (path) ->
@@ -410,13 +410,12 @@ transform = (input) ->
   if (
     transformed.comments # TODO: figure out where/why this actually should happen
   )
-    transformed.comments =
-      for comment in transformed.comments
-        {
-          ...comment
-          range: [comment.start, comment.end]
-          value: transformCommentValue comment.value
-        }
+    transformed.comments = for comment in transformed.comments
+      {
+        ...comment
+        range: [comment.start, comment.end]
+        value: transformCommentValue comment.value
+      }
   prettier.__debug.attachCommentsAndFormatAST(
     transformed
     parser: 'coffeescript'

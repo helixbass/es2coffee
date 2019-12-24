@@ -3,15 +3,34 @@ plugins:
   - prettier
 extends:
   - plugin:coffee/all
+  - plugin:coffee/prettier-run-as-rule
 rules:
-  prefer-destructuring: [error, {object: true}]
-  # no-underscore-dangle: error
-  # no-unreachable: error
+  coffee/prefer-destructuring: [error, {object: true}]
   no-unused-vars: error
   no-undef: error
-  prettier/prettier: [error, {parser: coffeescript, pluginSearchDirs: [.]}]
-  # prettier/prettier: [error, {parser: coffeescript, pluginSearchDirs: [/Users/jrosse/.config/yarn/global]}]
-  # prettier/prettier: [error, {parser: coffeescript, pluginSearchDirs: [/Users/jrosse/prj/es2coffee]}]
+  coffee/id-length: off
+  max-lines: off
+  coffee/no-magic-numbers: off
+  coffee/capitalized-comments: off
+  max-statements: off
+  coffee/max-lines-per-function: off
+  coffee/vars-on-top: off
+  coffee/no-constant-condition: off
+  coffee/no-return-assign: off
+  coffee/no-use-before-define: off
+  sort-keys: off
+  coffee/no-underscore-dangle: off
+  no-multi-assign: off
+  new-cap: off
+  coffee/spread-direction: off
+  no-inline-comments: off
+  line-comment-position: off
+  require-unicode-regexp: off
+  no-warning-comments: off
+  global-require: off
+  no-sync: off
+  coffee/multiline-comment-style: off
+  coffee/spaced-comment: off
 env:
   node: true
   jest: true

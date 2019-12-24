@@ -6,15 +6,15 @@ test 'correctly escapes double quotes inside TemplateLiteral', ->
 test 'turns multiline template literal into heredoc', ->
   transformed(
     '''
-    `
-      f = ->
-        c
-    `
-  '''
+      `
+        f = ->
+          c
+      `
     '''
     """
-      f = ->
-        c
+      '''
+        f = ->
+          c
+      '''
     """
-  '''
   )
