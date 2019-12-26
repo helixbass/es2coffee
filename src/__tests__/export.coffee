@@ -20,3 +20,14 @@ test 'correctly transforms named export function declaration', ->
       export testFilePath = (relativePath) ->
     '''
   )
+
+test 'correctly transforms default export function declaration', ->
+  transformed(
+    '''
+      export default function testFilePath(relativePath) {
+      }
+    '''
+    '''
+      export default testFilePath = (relativePath) ->
+    '''
+  )

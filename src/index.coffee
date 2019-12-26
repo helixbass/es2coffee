@@ -167,6 +167,16 @@ transformer = ({types: t}) ->
     )
 
   visitor: withNullReturnValues(
+    ExportDefaultDeclaration: (path) ->
+      {node: {declaration}, node} = path
+      if declaration?.type is 'FunctionDeclaration'
+        return path.replaceWith(
+          withLocation(node)(
+            t.exportDefaultDeclaration(
+              getFunctionDeclarationAssignment node: declaration
+            )
+          )
+        )
     ExportNamedDeclaration: (path) ->
       {node: {declaration, specifiers, source}, node} = path
       if declaration?.type is 'VariableDeclaration'
