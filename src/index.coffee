@@ -205,12 +205,14 @@ transformer = ({types: t}) ->
       if parentPath.node.type in ['ForInStatement', 'ForOfStatement']
         return path.replaceWith declarations[0].id
       assigns = declarations
-        .filter ({init}) -> init
+        # .filter ({init}) -> init
         .map (node) ->
           {id, init} = node
           withLocation(node)(
             t.expressionStatement(
-              withLocation(node) t.assignmentExpression '=', id, init
+              withLocation(node)(
+                t.assignmentExpression '=', id, init ? t.identifier 'undefined'
+              )
             )
           )
       path.replaceWithMultiple assigns
