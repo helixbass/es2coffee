@@ -13,11 +13,11 @@
     "coffeescript"
   ],
   "dependencies": {
-    "@babel/core": "^7.0.0-beta.46",
-    "babylon": "^7.0.0-beta.46",
+    "@babel/core": "^7.7.7",
+    "@babel/parser": "^7.7.7",
     "lodash": "^4.17.10",
-    "prettier": "github:helixbass/prettier#89036e58",
-    "prettier-plugin-coffeescript": "^0.1.1"
+    "prettier": "github:helixbass/prettier#b93cdfcf",
+    "prettier-plugin-coffeescript": "^0.1.4"
   },
   "scripts": {
     "build": "coffee -o build/ -c src",
@@ -27,9 +27,10 @@
     "test": "jest"
   },
   "devDependencies": {
-    "eslint": "^5.0.1",
+    "coffeescript": "^2.5.0",
+    "eslint": "^6.0.0",
     "eslint-config-prettier": "^3.0.1",
-    "eslint-plugin-coffee": "file:../eslint-plugin-coffee",
+    "eslint-plugin-coffee": "^0.1.12",
     "eslint-plugin-prettier": "^2.6.2",
     "jest": "^23.3.0"
   }

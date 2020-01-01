@@ -1,6 +1,5 @@
 plugins:
   - coffee
-  - prettier
 extends:
   - plugin:coffee/all
   - plugin:coffee/prettier-run-as-rule
