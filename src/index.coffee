@@ -130,7 +130,10 @@ transformer = ({types: t}) ->
       parent = nextParent
   notToUnless = (node) ->
     {test} = node
-    if t.isUnaryExpression test, operator: '!'
+    if (
+      t.isUnaryExpression(test, operator: '!') or
+      t.isUnaryExpression test, operator: 'not'
+    )
       node.test = test.argument
       node.inverted = yes
     else if t.isBinaryExpression test, operator: '!=='
@@ -277,10 +280,24 @@ transformer = ({types: t}) ->
         if node is parentPath.node.body[parentPath.node.body.length - 1]
           path.replaceWith withLocation(argument) t.expressionStatement argument
     BinaryExpression: (path) ->
-      {node: {operator}, node} = path
+      {node: {operator, left, right}, node} = path
       node.operator = 'is' if operator is '==='
       node.operator = 'isnt' if operator is '!=='
       node.operator = 'of' if operator is 'in' and not node._in
+
+      if (
+        operator in ['==', '!='] and
+        (left.type is 'NullLiteral' or right.type is 'NullLiteral')
+      )
+        expr = if left.type is 'NullLiteral' then right else left
+        existence = withLocation(node) t.unaryExpression '?', expr, no
+        return path.replaceWith(
+          if operator is '!='
+            existence
+          else
+            withLocation(node) t.unaryExpression 'not', existence
+        )
+
     ThisExpression: (path) ->
       {node} = path
       node.shorthand = yes
@@ -356,17 +373,18 @@ transformer = ({types: t}) ->
           )
         if guardingAnd path
           return path.replaceWith right
-    IfStatement: (path) ->
-      {node: {consequent, alternate}, node} = path
-      notToUnless node
-      if (
-        not alternate and
-        t.isBlockStatement(consequent) and
-        consequent.body.length is 1 and
-        t.isReturnStatement consequent.body[0]
-      )
-        node.postfix = yes
-        node.consequent = consequent.body[0]
+    IfStatement:
+      exit: (path) ->
+        {node: {consequent, alternate}, node} = path
+        notToUnless node
+        if (
+          not alternate and
+          t.isBlockStatement(consequent) and
+          consequent.body.length is 1 and
+          t.isReturnStatement consequent.body[0]
+        )
+          node.postfix = yes
+          node.consequent = consequent.body[0]
     ConditionalExpression: (path) ->
       {node} = path
       notToUnless node
