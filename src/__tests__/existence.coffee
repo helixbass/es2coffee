@@ -5,6 +5,8 @@ test 'simple == null -> existence', ->
 
   transformed 'a != null', 'a?'
 
+  transformed 'null != a', 'a?'
+
 test 'condition', ->
   transformed(
     '''
