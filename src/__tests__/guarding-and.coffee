@@ -12,3 +12,30 @@ test "doesn't generate soak", ->
   transformed 'a && c.a.b', 'a and c.a.b'
   transformed 'a.b && c.a.b', 'a.b and c.a.b'
   transformed 'a.b && c[a.b]', 'a.b and c[a.b]'
+
+test 'multiple guards', ->
+  transformed 'a.b && a.b.c && a.b.c.d', 'a.b?.c?.d'
+  transformed 'a.b && a.b.c && a.b.c()', 'a.b?.c?()'
+
+test 'if guarding body', ->
+  transformed(
+    '''
+      if (a) {
+        a.b()
+      }
+    '''
+    '''
+      a?.b()
+    '''
+  )
+
+  transformed(
+    '''
+      if (a && a.b) {
+        a.b.c()
+      }
+    '''
+    '''
+      a?.b?.c()
+    '''
+  )
