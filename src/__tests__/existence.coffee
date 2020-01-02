@@ -51,6 +51,20 @@ test 'return', ->
   transformed(
     '''
       const x = function() {
+        if (a == null) return
+        b
+      }
+    '''
+    '''
+      x = ->
+        return unless a?
+        b
+    '''
+  )
+
+  transformed(
+    '''
+      const x = function() {
         if (a != null) {
           return
         }

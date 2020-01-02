@@ -102,12 +102,8 @@ transformer = ({types: t}) ->
       isEquality(left) and
       isSameMemberExpression left.left, right.left
 
-  guardingAnd = (path) ->
-    {node: {operator, left, right}} = path
-    return no unless (
-      (operator is 'and' and t.isIdentifier(left)) or
-      t.isMemberExpression left
-    )
+  isGuard = (left, right) ->
+    return no unless t.isIdentifier(left) or t.isMemberExpression left
     current = right
     parent = null
     found = no
@@ -126,8 +122,16 @@ transformer = ({types: t}) ->
           return no
       if found
         parent.optional = yes
+        if parent.type is 'MemberExpression'
+          parent.object = left
+        else if parent.type is 'CallExpression'
+          parent.callee = left
         return yes
       parent = nextParent
+  guardingAnd = (path) ->
+    {node: {operator, left, right}} = path
+    return no unless operator is 'and'
+    isGuard left, right
   notToUnless = (node) ->
     {test} = node
     if (
@@ -136,8 +140,8 @@ transformer = ({types: t}) ->
     )
       node.test = test.argument
       node.inverted = yes
-    else if t.isBinaryExpression test, operator: '!=='
-      test.operator = '==='
+    else if t.isBinaryExpression test, operator: 'isnt'
+      test.operator = 'is'
       node.inverted = yes
 
   inSwitchCase = no
@@ -228,24 +232,12 @@ transformer = ({types: t}) ->
         )
       )
     ArrowFunctionExpression: (path) ->
-      {node: {params, body, generator, async}, node} = path
-      path.replaceWith(
-        withLocation(node)(
-          t.functionExpression(
-            null
-            params
-            if t.isBlockStatement body
-              body
-            else
-              withLocation(node)(
-                t.blockStatement [withLocation(node) t.expressionStatement body]
-              )
-          ,
-            generator
-            async
+      {node: {body}, node} = path
+      unless t.isBlockStatement body
+        node.body =
+          withLocation(body)(
+            t.blockStatement [withLocation(body) t.expressionStatement body]
           )
-        )
-      )
     ForStatement: (path) ->
       {node: {init, test, update, body}, node} = path
 
@@ -279,24 +271,27 @@ transformer = ({types: t}) ->
       if parentPath.isBlockStatement() and parentPath.parentPath.isFunction()
         if node is parentPath.node.body[parentPath.node.body.length - 1]
           path.replaceWith withLocation(argument) t.expressionStatement argument
-    BinaryExpression: (path) ->
-      {node: {operator, left, right}, node} = path
-      node.operator = 'is' if operator is '==='
-      node.operator = 'isnt' if operator is '!=='
-      node.operator = 'of' if operator is 'in' and not node._in
+    BinaryExpression:
+      enter: (path) ->
+        {node: {operator}, node} = path
+        node.operator = 'is' if operator is '==='
+        node.operator = 'isnt' if operator is '!=='
+        node.operator = 'of' if operator is 'in' and not node._in
 
-      if (
-        operator in ['==', '!='] and
-        (left.type is 'NullLiteral' or right.type is 'NullLiteral')
-      )
-        expr = if left.type is 'NullLiteral' then right else left
-        existence = withLocation(node) t.unaryExpression '?', expr, no
-        return path.replaceWith(
-          if operator is '!='
-            existence
-          else
-            withLocation(node) t.unaryExpression 'not', existence
+      exit: (path) ->
+        {node: {operator, left, right}, node} = path
+        if (
+          operator in ['==', '!='] and
+          (left.type is 'NullLiteral' or right.type is 'NullLiteral')
         )
+          expr = if left.type is 'NullLiteral' then right else left
+          existence = withLocation(node) t.unaryExpression '?', expr, no
+          return path.replaceWith(
+            if operator is '!='
+              existence
+            else
+              withLocation(node) t.unaryExpression 'not', existence
+          )
 
     ThisExpression: (path) ->
       {node} = path
@@ -371,20 +366,40 @@ transformer = ({types: t}) ->
               )
             )
           )
+      exit: (path) ->
+        {node: {right}} = path
         if guardingAnd path
           return path.replaceWith right
     IfStatement:
       exit: (path) ->
-        {node: {consequent, alternate}, node} = path
+        {node: {consequent, alternate, test}, node} = path
         notToUnless node
+        isSingleBody = (condition) ->
+          if (
+            t.isBlockStatement(consequent) and
+            consequent.body.length is 1 and
+            condition consequent.body[0]
+          )
+            return consequent.body[0]
+          if condition consequent
+            return consequent
+        singleReturnContinueOrBreak = isSingleBody (expr) ->
+          t.isReturnStatement(expr) or
+          t.isContinueStatement(expr) or
+          t.isBreakStatement expr
+
+        if not alternate and singleReturnContinueOrBreak?
+          node.postfix = yes
+          node.consequent = singleReturnContinueOrBreak
+
         if (
-          not alternate and
+          not alternate? and
           t.isBlockStatement(consequent) and
           consequent.body.length is 1 and
-          t.isReturnStatement consequent.body[0]
+          consequent.body[0].type is 'ExpressionStatement'
         )
-          node.postfix = yes
-          node.consequent = consequent.body[0]
+          if isGuard test, consequent.body[0].expression
+            return path.replaceWith consequent.body[0]
     ConditionalExpression: (path) ->
       {node} = path
       notToUnless node
@@ -496,5 +511,4 @@ resetLogColors = ->
   styles.boolean = 'normal'
   styles.null = 'normal'
 resetLogColors()
-# dump = (args..., obj) ->
-#   console.log args..., require('util').inspect obj, no, null
+# dump = (obj) => console.log require('util').inspect obj, false, null
