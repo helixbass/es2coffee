@@ -9,6 +9,13 @@ exports.override = ->
     assertOneOf
     validateOptional
   } = require '@babel/types/lib/definitions/utils'
+  # {UNARY_OPERATORS} = require '@babel/types/lib/constants'
+
+  # ### Monkeypatch ###
+
+  # constants.UNARY_OPERATORS = [...constants.UNARY_OPERATORS, '?']
+
+  ### Override ###
 
   defineType 'ExportNamedDeclaration',
     visitor: ['declaration', 'specifiers', 'source']
@@ -37,3 +44,13 @@ exports.override = ->
         validate: assertNodeType 'StringLiteral'
         optional: yes
       exportKind: validateOptional assertOneOf 'type', 'value'
+
+  defineType 'UnaryExpression',
+    builder: ['operator', 'argument', 'prefix']
+    fields:
+      prefix:
+        default: yes
+      argument:
+        validate: assertNodeType 'Expression'
+      operator: {}
+      # validate: assertOneOf [...UNARY_OPERATORS, '?']
