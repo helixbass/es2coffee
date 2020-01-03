@@ -39,3 +39,14 @@ test 'if guarding body', ->
       a?.b?.c()
     '''
   )
+
+test 'inverts and generates soak from guarding or', ->
+  transformed '!a.b || !a.b.c', 'not a.b?.c'
+  transformed '!a.b || !a.b[c].d', 'not a.b?[c].d'
+  transformed '!a || !a.b.c', 'not a?.b.c'
+  transformed '!a || !a(b)', 'not a? b'
+  transformed '!a[0].b || !a[0].b(c).d', 'not a[0].b?(c).d'
+
+test 'multiple guarding ors', ->
+  transformed '!a.b || !a.b.c || !a.b.c.d', 'not a.b?.c?.d'
+  transformed '!a.b || !a.b.c || !a.b.c()', 'not a.b?.c?()'

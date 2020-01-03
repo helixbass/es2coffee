@@ -1,12 +1,13 @@
 # babylon = require 'babylon'
 babel = require '@babel/core'
 prettier = require 'prettier'
-{mapValues: fmapValues} = require 'lodash/fp'
+{mapValues} = require 'lodash/fp'
+{last} = require 'lodash'
 {assign: extend} = require 'lodash'
 
 {override: overrideBabelTypes} = require './override-babel-types'
 
-withNullReturnValues = fmapValues (f) ->
+withNullReturnValues = mapValues (f) ->
   if f.enter or f.exit
     enter: (...args) ->
       f.enter? ...args
@@ -31,6 +32,9 @@ transformer = ({types: t}) ->
 
   isOr = (node) ->
     t.isLogicalExpression(node) and node.operator in ['||', 'or']
+
+  isNot = (node) ->
+    t.isUnaryExpression(node) and node.operator in ['!', 'not']
 
   additionToTemplateLiteral = (node) ->
     return no unless isAddition node
@@ -132,6 +136,12 @@ transformer = ({types: t}) ->
     {node: {operator, left, right}} = path
     return no unless operator is 'and'
     isGuard left, right
+  guardingOr = (path) ->
+    {node: {left, right}, node} = path
+    return no unless isOr node
+    return no unless isNot left
+    return no unless isNot right
+    isGuard left.argument, right.argument
   notToUnless = (node) ->
     {test} = node
     if (
@@ -143,8 +153,6 @@ transformer = ({types: t}) ->
     else if t.isBinaryExpression test, operator: 'isnt'
       test.operator = 'is'
       node.inverted = yes
-
-  inSwitchCase = no
 
   transformForInOf = ({style}) -> (path) ->
     {node: {left, right, body}, node} = path
@@ -370,6 +378,8 @@ transformer = ({types: t}) ->
         {node: {right}} = path
         if guardingAnd path
           return path.replaceWith right
+        if guardingOr path
+          return path.replaceWith right
     IfStatement:
       exit: (path) ->
         {node: {consequent, alternate, test}, node} = path
@@ -411,14 +421,14 @@ transformer = ({types: t}) ->
         'no'
     SwitchCase:
       enter: (path) ->
-        inSwitchCase ###:### = yes
         {node: {consequent}, node} = path
         if consequent.length is 1 and t.isBlockStatement consequent[0]
           node.consequent = consequent[0].body
-      exit: ->
-        inSwitchCase ###:### = no
     BreakStatement: (path) ->
-      path.remove() if inSwitchCase
+      {node, parent} = path
+      path.remove() if (
+        parent.type is 'SwitchCase' and node is last parent.consequent
+      )
     UnaryExpression: (path) ->
       {node: {operator, argument}, node, parent} = path
       node.operator = 'not' if (
