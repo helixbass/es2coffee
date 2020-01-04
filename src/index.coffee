@@ -181,6 +181,53 @@ transformer = ({types: t}) ->
       )
     )
 
+  createStringLiteral = (value) ->
+    node = t.stringLiteral value
+    node.extra =
+      raw: "'#{value}'" # TODO: escape quotes if need be (or make Prettier plugin ok with extra.raw not being present)
+    node
+
+  classesStack = []
+  visitClass =
+    enter: ->
+      classesStack.push {}
+    exit: (path) ->
+      {getterSetterProperties} = classesStack.pop()
+      for propertyName, propertyConfig of getterSetterProperties
+        location = propertyConfig.get ? propertyConfig.set
+        withLoc = withLocation location
+        objectDefinePropertyCall = withLoc(
+          t.callExpression(
+            withLoc(
+              t.memberExpression(
+                withLoc t.identifier 'Object'
+                withLoc t.identifier 'defineProperty'
+              )
+            )
+            [
+              withLoc(
+                t.memberExpression(
+                  withLoc t.thisExpression()
+                  withLoc t.identifier 'prototype'
+                )
+              )
+              withLoc createStringLiteral propertyName
+              withLoc(
+                t.objectExpression(
+                  for getterSetterName, getterSetterFunction of propertyConfig
+                    withLoc(
+                      t.objectProperty(
+                        withLoc t.identifier getterSetterName
+                        getterSetterFunction
+                      )
+                    )
+                )
+              )
+            ]
+          )
+        )
+        path.get('body').pushContainer 'body', objectDefinePropertyCall
+
   visitor: withNullReturnValues(
     ExportDefaultDeclaration: (path) ->
       {node: {declaration}, node} = path
@@ -246,6 +293,24 @@ transformer = ({types: t}) ->
           withLocation(body)(
             t.blockStatement [withLocation(body) t.expressionStatement body]
           )
+    ClassDeclaration: visitClass
+    ClassExpression: visitClass
+    ClassMethod: (path) ->
+      {node: {kind, key, params, body, generator, async}, node} = path
+      if kind in ['get', 'set']
+        klass = last classesStack
+        klass.getterSetterProperties ?= {}
+        {getterSetterProperties} = klass
+        if (
+          t.isIdentifier key # TODO: handle computed key
+        )
+          propertyDescription = getterSetterProperties[key.name] ?= {}
+          propertyDescription[kind] =
+            withLocation(node)(
+              t.functionExpression null, params, body, generator, async
+            )
+        path.remove()
+
     ForStatement: (path) ->
       {node: {init, test, update, body}, node} = path
 
@@ -467,6 +532,10 @@ transformer = ({types: t}) ->
             delimiter: '///'
             flags: ''
         )
+    MemberExpression: (path) ->
+      {node: {property}, node} = path
+      if t.isIdentifier property, name: 'prototype'
+        node.shorthand = yes
   )
 
 withLocation = (node, {after} = {}) -> (newNode) ->

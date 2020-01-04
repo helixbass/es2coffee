@@ -30,6 +30,7 @@ rules:
   no-sync: off
   coffee/multiline-comment-style: off
   coffee/spaced-comment: off
+  coffee/guard-for-in: off
 env:
   node: true
   jest: true
