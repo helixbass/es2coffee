@@ -775,6 +775,19 @@ transformer = ({types: t}) ->
           path.replaceWith(
             withLocation(node) t.unaryExpression 'do', callee, yes
           )
+    AssignmentExpression:
+      exit: (path) ->
+        {node: {left, right, operator}, node} = path
+        do ->
+          return unless operator is '='
+          return unless t.isIdentifier(left) or t.isMemberExpression left
+          return unless t.isLogicalExpression right
+          return unless (
+            t.isIdentifier(right.left) or t.isMemberExpression right.left
+          )
+          return unless isSameMemberExpression left, right.left
+          node.operator = "#{right.operator}="
+          node.right = right.right
   )
 
 withLocation = (node, {after} = {}) -> (newNode) ->
