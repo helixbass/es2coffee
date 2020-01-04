@@ -266,6 +266,82 @@ transformer = ({types: t}) ->
         )
         path.get('body').pushContainer 'body', objectDefinePropertyCall
 
+  adjustBlockStatementLocationData = (path) ->
+    {node} = path
+    node.loc.start.line += 1
+
+  compileForLoop = (path) ->
+    {node: {init, test, update, body}, node, scope} = path
+    return unless t.isVariableDeclaration init
+    return unless init.declarations.length is 1
+    {id, init: initialValue} = init.declarations[0]
+    return unless t.isIdentifier id
+    return unless t.isNumericLiteral initialValue, value: 0
+    return unless t.isBinaryExpression test, operator: '<'
+    return unless t.isIdentifier test.left, name: id.name
+    return unless t.isMemberExpression test.right
+    return unless t.isIdentifier test.right.object
+    return unless t.isIdentifier test.right.property, name: 'length'
+    array = test.right.object
+    return unless t.isUpdateExpression update, operator: '++'
+    return unless t.isIdentifier update.argument, name: id.name
+    itemVariable = null
+    grabsItem = do ->
+      return unless t.isBlockStatement body
+      return unless body.body.length > 1
+      [firstStatement] = body.body
+      return unless t.isVariableDeclaration firstStatement
+      return unless firstStatement.declarations.length is 1
+      {
+        id: itemVariable
+        init: itemVariableInitialization
+      } = firstStatement.declarations[0]
+      return unless (
+        t.isMemberExpression itemVariableInitialization, computed: yes
+      )
+      return unless (
+        t.isIdentifier itemVariableInitialization.object, name: array.name
+      )
+      return unless (
+        t.isIdentifier itemVariableInitialization.property, name: id.name
+      )
+      yes
+
+    adjustBlockStatementLocationData path.get 'body' if t.isBlockStatement body
+    withLoc = withLocation node
+    unless grabsItem
+      path.replaceWith(
+        withLoc {
+          type: 'For'
+          source: withLoc(
+            type: 'Range'
+            from: initialValue
+            to: test.right
+            exclusive: yes
+          )
+          body
+          name: id
+          style: 'in'
+        }
+      )
+      return yes
+
+    path.get('body.body.0').remove()
+    shouldExposeIndexVariable = do ->
+      indexVariableBinding = scope.getBinding id.name
+      indexVariableBinding.referencePaths.length > 3
+    path.replaceWith(
+      withLoc {
+        type: 'For'
+        source: array
+        body
+        name: itemVariable
+        index: id if shouldExposeIndexVariable
+        style: 'in'
+      }
+    )
+    yes
+
   visitor: withNullReturnValues(
     ExportDefaultDeclaration: (path) ->
       {node: {declaration}, node} = path
@@ -413,14 +489,13 @@ transformer = ({types: t}) ->
     ForStatement: (path) ->
       {node: {init, test, update, body}, node} = path
 
+      return if compileForLoop path
       path.get('body').pushContainer 'body', t.expressionStatement update
+      whileStatement = withLocation(node) t.whileStatement test, body
       unless init
-        path.replaceWith withLocation(node) t.whileStatement test, body
+        path.replaceWith whileStatement
       else
-        path.replaceWithMultiple [
-          init
-          withLocation(node) t.whileStatement test, body
-        ]
+        path.replaceWithMultiple [init, whileStatement]
     ForOfStatement:
       exit: transformForInOf style: 'from'
     ForInStatement:
@@ -688,8 +763,7 @@ transformer = ({types: t}) ->
         if ownBinding and outerBinding and ownBinding.kind isnt 'param'
           scope.rename name
     BlockStatement: (path) ->
-      {node} = path
-      node.loc.start.line += 1
+      adjustBlockStatementLocationData path
   )
 
 withLocation = (node, {after} = {}) -> (newNode) ->
