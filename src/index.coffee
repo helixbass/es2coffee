@@ -20,6 +20,28 @@ withNullReturnValues = mapValues (f) ->
       f ...args
       null
 
+COFFEE_KEYWORDS = [
+  'undefined'
+  'Infinity'
+  'NaN'
+  'then'
+  'unless'
+  'until'
+  'loop'
+  'of'
+  'by'
+  'when'
+  'and'
+  'or'
+  'is'
+  'isnt'
+  'not'
+  'yes'
+  'no'
+  'on'
+  'off'
+]
+
 transformer = ({types: t}) ->
   isSameIdentifier = (a, b) ->
     t.isIdentifier(a) and t.isIdentifier(b) and a.name is b.name
@@ -536,6 +558,12 @@ transformer = ({types: t}) ->
       {node: {property}, node} = path
       if t.isIdentifier property, name: 'prototype'
         node.shorthand = yes
+    Identifier: (path) ->
+      {node: {name}} = path
+      if (
+        name in COFFEE_KEYWORDS and path.scope.hasBinding name # TODO: should warn about non-declared names (except "global" name eg undefined, NaN, Infinity?
+      )
+        path.scope.rename name
   )
 
 withLocation = (node, {after} = {}) -> (newNode) ->
