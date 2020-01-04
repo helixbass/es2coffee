@@ -210,10 +210,13 @@ transformer = ({types: t}) ->
     node
 
   classesStack = []
+  thisContextsStack = []
   visitClass =
-    enter: ->
+    enter: (path) ->
       classesStack.push {}
+      thisContextsStack.push {path}
     exit: (path) ->
+      thisContextsStack.pop()
       {getterSetterProperties} = classesStack.pop()
       for propertyName, propertyConfig of getterSetterProperties
         location = propertyConfig.get ? propertyConfig.set
@@ -300,21 +303,37 @@ transformer = ({types: t}) ->
             )
           )
       path.replaceWithMultiple assigns
-    FunctionDeclaration: (path) ->
-      {node} = path
+    FunctionDeclaration:
+      enter: (path) ->
+        {node} = path
+        thisContextsStack.push {path}
 
-      path.replaceWith(
-        withLocation(node)(
-          t.expressionStatement getFunctionDeclarationAssignment {node}
-        )
-      )
-    ArrowFunctionExpression: (path) ->
-      {node: {body}, node} = path
-      unless t.isBlockStatement body
-        node.body =
-          withLocation(body)(
-            t.blockStatement [withLocation(body) t.expressionStatement body]
+        path.replaceWith(
+          withLocation(node)(
+            t.expressionStatement getFunctionDeclarationAssignment {node}
           )
+        )
+      exit: ->
+        thisContextsStack.pop()
+    FunctionExpression:
+      enter: (path) ->
+        thisContextsStack.push {path}
+      exit: ->
+        thisContextsStack.pop()
+    ArrowFunctionExpression:
+      enter: (path) ->
+        {node: {body}, node} = path
+        thisContextsStack.push {path}
+        unless t.isBlockStatement body
+          node.body =
+            withLocation(body)(
+              t.blockStatement [withLocation(body) t.expressionStatement body]
+            )
+      exit: (path) ->
+        {node} = path
+        {thisReferences} = thisContextsStack.pop()
+        unless thisReferences?.length
+          node.type = 'FunctionExpression'
     ClassDeclaration: visitClass
     ClassExpression: visitClass
     ClassMethod: (path) ->
@@ -391,6 +410,10 @@ transformer = ({types: t}) ->
     ThisExpression: (path) ->
       {node} = path
       node.shorthand = yes
+
+      [thisContext] = thisContextsStack
+      if thisContext?
+        (thisContext.thisReferences ?= []).push path
     LogicalExpression:
       enter: (path) ->
         {node: {left, right, operator}, node} = path

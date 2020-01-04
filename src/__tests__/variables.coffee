@@ -81,7 +81,7 @@ test 'renames shadowed var variable', ->
       x = 1
       x + 3
 
-      f =>
+      f ->
         _x = 2
         _x * 2
     '''
@@ -105,6 +105,6 @@ test "doesn't rename shadowed param", ->
 
       y = (x) -> x
 
-      a ({x}) => x
+      a ({x}) -> x
     '''
   )
