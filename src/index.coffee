@@ -559,11 +559,19 @@ transformer = ({types: t}) ->
       if t.isIdentifier property, name: 'prototype'
         node.shorthand = yes
     Identifier: (path) ->
-      {node: {name}} = path
+      {node: {name}, scope} = path
       if (
-        name in COFFEE_KEYWORDS and path.scope.hasBinding name # TODO: should warn about non-declared names (except "global" name eg undefined, NaN, Infinity?
+        name in COFFEE_KEYWORDS and
+        # path.isReferencedIdentifier() and
+        scope.hasBinding name # TODO: should warn about non-declared names (except "global" name eg undefined, NaN, Infinity?
       )
-        path.scope.rename name
+        scope.rename name
+
+      unless t.isClassDeclaration scope.block
+        ownBinding = scope.getOwnBinding name
+        outerBinding = scope.parent?.getBinding name
+        if ownBinding and outerBinding and ownBinding.kind isnt 'param'
+          scope.rename name
   )
 
 withLocation = (node, {after} = {}) -> (newNode) ->
