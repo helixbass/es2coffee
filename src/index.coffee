@@ -2,7 +2,7 @@
 babel = require '@babel/core'
 prettier = require 'prettier'
 {mapValues} = require 'lodash/fp'
-{last} = require 'lodash'
+{last, isArray} = require 'lodash'
 {assign: extend} = require 'lodash'
 
 {override: overrideBabelTypes} = require './override-babel-types'
@@ -193,15 +193,27 @@ transformer = ({types: t}) ->
     node: {id, params, body, generator, async}
     node
   }) ->
-    withLocation(node)(
-      t.assignmentExpression(
-        '='
-        id
-        withLocation(node, after: id)(
-          t.functionExpression null, params, body, generator, async
-        )
+    functionExpression =
+      withLocation(node, after: id)(
+        t.functionExpression null, params, body, generator, async
       )
+    withLocation(node)(
+      if id?
+        t.assignmentExpression '=', id, functionExpression
+      # export default anonymous function
+      else
+        functionExpression
     )
+
+  getFunctionParent = (path) ->
+    currentPath = path?.parentPath
+    prevPath = path
+    while currentPath
+      {node: currentNode} = currentPath
+      if t.isFunction(currentNode) or t.isProgram currentNode
+        return functionParentPath: currentPath, statementPath: prevPath
+      prevPath = currentPath
+      currentPath = currentPath.parentPath
 
   createStringLiteral = (value) ->
     node = t.stringLiteral value
@@ -305,14 +317,59 @@ transformer = ({types: t}) ->
       path.replaceWithMultiple assigns
     FunctionDeclaration:
       enter: (path) ->
-        {node} = path
+        {node: {id}, node, scope} = path
         thisContextsStack.push {path}
 
-        path.replaceWith(
+        functionAssignment =
           withLocation(node)(
             t.expressionStatement getFunctionDeclarationAssignment {node}
           )
-        )
+        earliestPrecedingReference = null
+        if id?
+          binding = scope.getBinding id.name
+          {block: bindingScopeBlock} = binding.scope
+          {referencePaths} = binding
+          for referencePath in referencePaths
+            {node: referenceNode} = referencePath
+            continue unless referenceNode.start < id.start
+            continue unless (
+              not earliestPrecedingReference? or
+              referenceNode.start < earliestPrecedingReference.path.node.start
+            )
+            {
+              functionParentPath: referenceFunctionParentPath
+              statementPath: referenceStatementParentPath
+            } = getFunctionParent referencePath
+            continue unless (
+              bindingScopeBlock is referenceFunctionParentPath?.node
+            )
+            earliestPrecedingReference =
+              path: referencePath
+              functionParentPath: referenceFunctionParentPath
+              statementParentPath: referenceStatementParentPath
+        if earliestPrecedingReference?
+          # earliestPrecedingReference.statementParentPath.insertBefore(
+          #   functionAssignment
+          # )
+          referenceStart = earliestPrecedingReference.path.node.start
+          functionBody = earliestPrecedingReference.functionParentPath.node.body
+          functionBodyPath = 'body'
+          if not isArray(functionBody) and functionBody.body?
+            functionBody = functionBody.body
+            functionBodyPath = 'body.body'
+          for statementNode, statementIndex in functionBody
+            statementPath = earliestPrecedingReference.functionParentPath.get(
+              "#{functionBodyPath}.#{statementIndex}"
+            )
+            if (
+              statementNode.start <= referenceStart and
+              statementNode.end >= referenceStart
+            )
+              path.remove()
+              statementPath.insertBefore functionAssignment
+              break
+        else
+          path.replaceWith functionAssignment
       exit: ->
         thisContextsStack.pop()
     FunctionExpression:
