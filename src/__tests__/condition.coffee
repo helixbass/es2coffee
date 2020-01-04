@@ -8,7 +8,8 @@ test 'convert !== to unless', ->
       }
     '''
     '''
-      unless name is 'default' then b
+      unless name is 'default'
+        b
     '''
   )
 

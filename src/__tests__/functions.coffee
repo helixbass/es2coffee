@@ -95,7 +95,8 @@ describe 'hoisting named functions with preceding static references', ->
       '''
       '''
         b = -> console.log 'here'
-        if yes then b()
+        if yes
+          b()
       '''
     )
 
@@ -115,7 +116,8 @@ describe 'hoisting named functions with preceding static references', ->
       '''
         a = ->
           b = -> console.log 'here'
-          if yes then b()
+          if yes
+            b()
       '''
     )
 

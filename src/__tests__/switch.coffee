@@ -24,7 +24,8 @@ test 'preserves non-switch break', ->
       }
     '''
     '''
-      while yes then break
+      while yes
+        break
     '''
   )
 
@@ -61,6 +62,7 @@ test 'preserves nontrailing break in switch case', ->
     '''
       switch a
         when b
-          while yes then break
+          while yes
+            break
     '''
   )

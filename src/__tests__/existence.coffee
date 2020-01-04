@@ -15,7 +15,8 @@ test 'condition', ->
       }
     '''
     '''
-      if a? then b
+      if a?
+        b
     '''
   )
 
@@ -27,7 +28,8 @@ test 'inverted condition', ->
       }
     '''
     '''
-      unless a? then b
+      unless a?
+        b
     '''
   )
 

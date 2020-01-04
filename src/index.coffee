@@ -652,6 +652,9 @@ transformer = ({types: t}) ->
         outerBinding = scope.parent?.getBinding name
         if ownBinding and outerBinding and ownBinding.kind isnt 'param'
           scope.rename name
+    BlockStatement: (path) ->
+      {node} = path
+      node.loc.start.line += 1
   )
 
 withLocation = (node, {after} = {}) -> (newNode) ->
