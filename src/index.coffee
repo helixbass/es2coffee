@@ -764,6 +764,17 @@ transformer = ({types: t}) ->
           scope.rename name
     BlockStatement: (path) ->
       adjustBlockStatementLocationData path
+    CallExpression:
+      exit: (path) ->
+        {node: {callee, arguments: args}, node} = path
+        if (
+          args.length is 0 and
+          t.isFunction(callee) and
+          callee.params.length is 0
+        )
+          path.replaceWith(
+            withLocation(node) t.unaryExpression 'do', callee, yes
+          )
   )
 
 withLocation = (node, {after} = {}) -> (newNode) ->
