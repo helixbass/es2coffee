@@ -223,6 +223,7 @@ transformer = ({types: t}) ->
 
   classesStack = []
   thisContextsStack = []
+  switchStatementsStack = []
   visitClass =
     enter: (path) ->
       classesStack.push {}
@@ -468,7 +469,7 @@ transformer = ({types: t}) ->
       {node} = path
       node.shorthand = yes
 
-      [thisContext] = thisContextsStack
+      [..., thisContext] = thisContextsStack
       if thisContext?
         (thisContext.thisReferences ?= []).push path
     LogicalExpression:
@@ -586,16 +587,50 @@ transformer = ({types: t}) ->
         'yes'
       else
         'no'
+    SwitchStatement:
+      enter: ->
+        switchStatementsStack.push currentFallthroughCases: []
+      exit: ->
+        switchStatementsStack.pop()
     SwitchCase:
       enter: (path) ->
         {node: {consequent}, node} = path
         if consequent.length is 1 and t.isBlockStatement consequent[0]
           node.consequent = consequent[0].body
-    BreakStatement: (path) ->
-      {node, parent} = path
-      path.remove() if (
-        parent.type is 'SwitchCase' and node is last parent.consequent
-      )
+        {consequent} = node
+        [..., lastStatement] = consequent
+        [..., switchStatement] = switchStatementsStack
+        {currentFallthroughCases} = switchStatement
+        isLastCase = node is last path.parentPath.node.cases
+        if (
+          lastStatement? and
+          not isLastCase and
+          not t.isBreakStatement(lastStatement) and
+          not t.isReturnStatement lastStatement
+        )
+          currentFallthroughCases.push path
+        else if lastStatement? or isLastCase
+          if t.isBreakStatement lastStatement
+            path.get("consequent.#{consequent.length - 1}").remove()
+          for currentFallthroughCase, currentFallthroughCaseIndex in (
+            currentFallthroughCases
+          )
+            for followingFallthroughCase in (
+              currentFallthroughCases[(currentFallthroughCaseIndex + 1)..]
+            )
+              for followingFallthroughStatement in (
+                followingFallthroughCase.node.consequent
+              )
+                currentFallthroughCase.pushContainer(
+                  'consequent'
+                  followingFallthroughStatement
+                )
+            for statement in consequent
+              currentFallthroughCase.pushContainer 'consequent', statement
+          switchStatement.currentFallthroughCases = []
+        # TODO: in theory someone could have an empty fallthrough to default eg case 'c': default: {...}
+        # which should treat 'c' as a currentFallthroughCase (ie copy the default block into 'c')
+
     UnaryExpression: (path) ->
       {node: {operator, argument}, node, parent} = path
       node.operator = 'not' if (
