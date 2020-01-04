@@ -108,3 +108,72 @@ test "doesn't rename shadowed param", ->
       a ({x}) -> x
     '''
   )
+
+describe 'initialization', ->
+  test 'initializes uninitialized variables by default', ->
+    transformed(
+      '''
+        var a, b;
+
+        f(a, b)
+      '''
+      '''
+        a = undefined
+        b = undefined
+
+        f a, b
+      '''
+    )
+
+  test "doesn't initialize uninitialized variables if initial use is write (in same scope)", ->
+    transformed(
+      '''
+        var a, b;
+
+        a = 1
+        f(a, b)
+      '''
+      '''
+        b = undefined
+
+        a = 1
+        f a, b
+      '''
+    )
+
+  test "doesn't initialize uninitialized variables if initial use is write in nested non-function scope", ->
+    transformed(
+      '''
+        var a, b;
+
+        if (true) {
+          a = 1
+        }
+        f(a, b)
+      '''
+      '''
+        b = undefined
+
+        if yes
+          a = 1
+        f a, b
+      '''
+    )
+
+    transformed(
+      '''
+        var a, b;
+
+        (function() {
+          a = 1
+        })()
+        f(a, b)
+      '''
+      '''
+        a = undefined
+        b = undefined
+
+        do -> a = 1
+        f a, b
+      '''
+    )

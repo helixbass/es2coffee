@@ -1,9 +1,8 @@
 # babylon = require 'babylon'
 babel = require '@babel/core'
 prettier = require 'prettier'
-{mapValues} = require 'lodash/fp'
-{last, isArray} = require 'lodash'
-{assign: extend} = require 'lodash'
+{mapValues, sortBy, flow} = require 'lodash/fp'
+{last, isArray, assign: extend, first} = require 'lodash'
 
 {override: overrideBabelTypes} = require './override-babel-types'
 
@@ -377,13 +376,31 @@ transformer = ({types: t}) ->
           )
         )
     VariableDeclaration: (path) ->
-      {node: {declarations}, parentPath} = path
+      {node: {declarations}, parentPath, scope} = path
       if parentPath.node.type in ['ForInStatement', 'ForOfStatement']
         return path.replaceWith declarations[0].id
       assigns = declarations
         # .filter ({init}) -> init
         .map (node) ->
           {id, init} = node
+          isUninitializedButAssignedFirst = do ->
+            return unless not init? and t.isIdentifier id
+            {constantViolations, referencePaths} = scope.getBinding id.name
+            return unless constantViolations?.length
+            return yes unless referencePaths?.length
+            getFirstPathByLocation = flow(
+              sortBy 'node.start'
+              first
+            )
+            firstAssignment = getFirstPathByLocation constantViolations
+            firstAssignmentScope =
+              firstAssignment.scope.getFunctionParent() or
+              firstAssignment.scope.getProgramParent()
+            return unless firstAssignmentScope is scope
+            firstReference = getFirstPathByLocation referencePaths
+            firstAssignment.node.start < firstReference.node.start
+
+          return if isUninitializedButAssignedFirst
           withLocation(node)(
             t.expressionStatement(
               withLocation(node)(
@@ -391,6 +408,7 @@ transformer = ({types: t}) ->
               )
             )
           )
+        .filter (node) -> node
       path.replaceWithMultiple assigns
     FunctionDeclaration:
       enter: (path) ->
