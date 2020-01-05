@@ -106,3 +106,155 @@ describe 'for loops', ->
           b i
       '''
     )
+
+  test 'for loop with pre-declared index', ->
+    transformed(
+      '''
+        var i;
+        for (i = 0; i < items.length; i++) {
+          const item = items[i]
+          b(item);
+        }
+      '''
+      '''
+        for item in items
+          b item
+      '''
+    )
+
+  describe 'length caching', ->
+    describe 'loop-declared variables', ->
+      test 'for loop that caches length', ->
+        transformed(
+          '''
+            for (let i = 0, iz = items.length; i < iz; ++i) {
+              const item = items[i]
+              b(item);
+            }
+          '''
+          '''
+            for item in items
+              b item
+          '''
+        )
+
+      test 'for loop that caches length -> range', ->
+        transformed(
+          '''
+            for (let i = 0, iz = items.length; i < iz; ++i) {
+              b(items[i + 1]);
+            }
+          '''
+          '''
+            for i in [0...items.length]
+              b items[i + 1]
+          '''
+        )
+
+      test 'for loop that caches length -> range + assignment', ->
+        transformed(
+          '''
+            for (let i = 0, iz = items.length; i < iz; ++i) {
+              b(items[i + 1 - iz]);
+            }
+          '''
+          '''
+            for i in [0...(iz = items.length)]
+              b items[i + 1 - iz]
+          '''
+        )
+
+    describe 'predeclared variables', ->
+      test 'for loop that caches length', ->
+        transformed(
+          '''
+            var i, iz;
+
+            for (i = 0, iz = items.length; i < iz; ++i) {
+              const item = items[i]
+              b(item);
+            }
+          '''
+          '''
+            for item in items
+              b item
+          '''
+        )
+
+      test 'for loop that caches length -> range', ->
+        transformed(
+          '''
+            let i, iz;
+            for (i = 0, iz = items.length; i < iz; ++i) {
+              b(items[i + 1]);
+            }
+          '''
+          '''
+            for i in [0...items.length]
+              b items[i + 1]
+          '''
+        )
+
+      test 'for loop that caches length -> range + assignment', ->
+        transformed(
+          '''
+            var i, iz;
+            for (i = 0, iz = items.length; i < iz; ++i) {
+              b(items[i + 1 - iz]);
+            }
+          '''
+          '''
+            for i in [0...(iz = items.length)]
+              b items[i + 1 - iz]
+          '''
+        )
+
+  describe 'guard', ->
+    test 'guarding if -> when', ->
+      transformed(
+        '''
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i]
+            if (item != null) {
+              b(item);
+            }
+          }
+        '''
+        '''
+          for item in items when item?
+            b item
+        '''
+      )
+
+    test 'multiple nested guarding if -> when', ->
+      transformed(
+        '''
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i]
+            if (item != null) {
+              if (b) {
+                b(item);
+              }
+            }
+          }
+        '''
+        '''
+          for item in items when item? and b
+            b item
+        '''
+      )
+
+    test 'guarding if -> when range', ->
+      transformed(
+        '''
+          for (let i = 0; i < items.length; i++) {
+            if (i !== 1) {
+              b(i + 1);
+            }
+          }
+        '''
+        '''
+          for i in [0...items.length] when i isnt 1
+            b i + 1
+        '''
+      )

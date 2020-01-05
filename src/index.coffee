@@ -91,8 +91,8 @@ transformer = ({types: t}) ->
       expressions
     )
 
-  isSameMemberExpression = (first, second) ->
-    a = first
+  isSameMemberExpression = (_first, second) ->
+    a = _first
     b = second
     loop
       return yes if isSameIdentifier a, b
@@ -269,19 +269,99 @@ transformer = ({types: t}) ->
     {node} = path
     node.loc.start.line += 1
 
+  getBlockSingleStatement = (node) ->
+    if t.isBlockStatement node
+      return unless node.body.length is 1
+      return node.body[0]
+    node
+
+  orDefault = (defaultVal) -> (f) -> (...args) ->
+    f(...args) ? defaultVal
+
   compileForLoop = (path) ->
     {node: {init, test, update, body}, node, scope} = path
-    return unless t.isVariableDeclaration init
-    return unless init.declarations.length is 1
-    {id, init: initialValue} = init.declarations[0]
-    return unless t.isIdentifier id
-    return unless t.isNumericLiteral initialValue, value: 0
+    isLengthMemberExpression = (_node) ->
+      return unless t.isMemberExpression _node
+      return unless t.isIdentifier _node.object
+      return unless t.isIdentifier _node.property, name: 'length'
+      yes
+    {
+      id
+      initialValue
+      lengthVariable
+      lengthMemberExpression
+      array
+    } = do orDefault({}) ->
+      _id = null
+      _initialValue = null
+      _lengthVariable = null
+      _lengthMemberExpression = null
+      _array = null
+      checkSingleAssignmentOrDeclaration =
+        orDefault({}) (assignmentOrDeclaration) ->
+          __id = null
+          __initialValue = null
+          if t.isVariableDeclarator assignmentOrDeclaration
+            {id: __id, init: __initialValue} = assignmentOrDeclaration
+          else
+            {left: __id, right: __initialValue} = assignmentOrDeclaration
+          return unless t.isIdentifier __id
+          return unless t.isNumericLiteral __initialValue, value: 0
+          _id: __id, _initialValue: __initialValue
+      if t.isVariableDeclaration init
+        switch init.declarations.length
+          when 1
+            {
+              _id
+              _initialValue
+            } = checkSingleAssignmentOrDeclaration init.declarations[0]
+            return unless _id?
+          when 2
+            [zeroInitializer, lengthInitializer] = init.declarations
+            {
+              _id
+              _initialValue
+            } = checkSingleAssignmentOrDeclaration zeroInitializer
+            return unless _id?
+            {
+              id: _lengthVariable
+              init: _lengthMemberExpression
+            } = lengthInitializer
+            return unless t.isIdentifier _lengthVariable
+            return unless isLengthMemberExpression _lengthMemberExpression
+            _array = _lengthMemberExpression.object
+          else
+            return
+      else if t.isAssignmentExpression init
+        {_id, _initialValue} = checkSingleAssignmentOrDeclaration init
+        return unless _id?
+      else if t.isSequenceExpression init
+        return unless init.expressions.length is 2
+        [zeroAssignment, lengthAssignment] = init.expressions
+        {_id, _initialValue} = checkSingleAssignmentOrDeclaration zeroAssignment
+        return unless _id?
+        {
+          left: _lengthVariable
+          right: _lengthMemberExpression
+        } = lengthAssignment
+        return unless t.isIdentifier _lengthVariable
+        return unless isLengthMemberExpression _lengthMemberExpression
+        _array = _lengthMemberExpression.object
+      else
+        return
+      id: _id
+      initialValue: _initialValue
+      lengthVariable: _lengthVariable
+      lengthMemberExpression: _lengthMemberExpression
+      array: _array
+    return unless id?
     return unless t.isBinaryExpression test, operator: '<'
     return unless t.isIdentifier test.left, name: id.name
-    return unless t.isMemberExpression test.right
-    return unless t.isIdentifier test.right.object
-    return unless t.isIdentifier test.right.property, name: 'length'
-    array = test.right.object
+    unless array?
+      return unless isLengthMemberExpression test.right
+      array = test.right.object
+    else
+      return unless t.isIdentifier test.right, name: lengthVariable.name
     return unless t.isUpdateExpression update, operator: '++'
     return unless t.isIdentifier update.argument, name: id.name
     itemVariable = null
@@ -307,6 +387,26 @@ transformer = ({types: t}) ->
       yes
 
     adjustBlockStatementLocationData path.get 'body' if t.isBlockStatement body
+    getGuard = ->
+      guards = []
+      returnGuard = ->
+        return unless guards.length
+        withLocGuard = withLocation guards[0]
+        firstGuard = guards.shift()
+        ret = firstGuard
+        while guards.length
+          nextGuard = guards.shift()
+          ret = withLocGuard t.logicalExpression '&&', ret, nextGuard
+        ret
+      loop
+        singleStatement = getBlockSingleStatement node.body
+        return returnGuard() unless singleStatement
+        return returnGuard() unless t.isIfStatement singleStatement
+        return returnGuard() if singleStatement.alternate?
+        node.body = singleStatement.consequent
+        guards.push singleStatement.test
+    guard = getGuard()
+    {body} = node
     withLoc = withLocation node
     unless grabsItem
       path.replaceWith(
@@ -315,12 +415,26 @@ transformer = ({types: t}) ->
           source: withLoc(
             type: 'Range'
             from: initialValue
-            to: test.right
+            to: if lengthVariable?
+              {referencePaths} = scope.getBinding lengthVariable.name
+              if referencePaths.length > 1
+                withLoc(
+                  t.assignmentExpression(
+                    '='
+                    lengthVariable
+                    lengthMemberExpression
+                  )
+                )
+              else
+                lengthMemberExpression
+            else
+              test.right
             exclusive: yes
           )
           body
           name: id
           style: 'in'
+          guard: guard or null
         }
       )
       return yes
@@ -329,6 +443,8 @@ transformer = ({types: t}) ->
     shouldExposeIndexVariable = do ->
       indexVariableBinding = scope.getBinding id.name
       indexVariableBinding.referencePaths.length > 3
+    guard = getGuard()
+    {body} = node
     path.replaceWith(
       withLoc {
         type: 'For'
@@ -337,6 +453,7 @@ transformer = ({types: t}) ->
         name: itemVariable
         index: id if shouldExposeIndexVariable
         style: 'in'
+        guard: guard or null
       }
     )
     yes

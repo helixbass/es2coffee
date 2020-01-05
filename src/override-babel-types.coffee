@@ -54,3 +54,5 @@ exports.override = ->
         validate: assertNodeType 'Expression'
       operator: {}
       # validate: assertOneOf [...UNARY_OPERATORS, '?']
+
+  defineType 'For', visitor: ['name', 'index', 'guard', 'step', 'body']
