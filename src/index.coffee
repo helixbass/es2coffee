@@ -990,7 +990,28 @@ withLocation = (node, {after} = {}) -> (newNode) ->
 
 # TODO: refine a lot
 transformCommentValue = (value) ->
-  value.replace(/\n\s*\*/g, '\n#').replace /\n\s*$/, '\n'
+  textIndent = do ->
+    _textIndent = null
+    indentRegex = /\n(\s*)[^*\s]/g
+    while match = indentRegex.exec value
+      thisIndent = match[1].length
+      _textIndent = thisIndent if not _textIndent? or thisIndent < _textIndent
+    _textIndent
+  value
+    .replace(
+      ///
+        \n
+        #{
+        if textIndent? and textIndent > 0
+          "\\s{0,#{textIndent - 1}}"
+        else
+          '\\s*'
+      }
+        \*
+      ///g
+      '\n#'
+    )
+    .replace /\n\s*$/, '\n'
 
 transform = (input) ->
   overrideBabelTypes()

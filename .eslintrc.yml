@@ -35,6 +35,8 @@ rules:
   no-plusplus: off
   coffee/complexity: off
   coffee/no-implicit-coercion: off
+  coffee/no-nested-interpolation: off
+  coffee/no-cond-assign: off
 env:
   node: true
   jest: true
