@@ -11,3 +11,26 @@ test 'iife with no args -> do', ->
       y = do -> x()
     '''
   )
+
+test 'strip top-level iife', ->
+  transformed(
+    '''
+      (function() {
+        x()
+      })()
+    '''
+    '''
+      x()
+    '''
+  )
+test "don't strip top-level iife with args", ->
+  transformed(
+    '''
+      (function(_this) {
+        x()
+      })(this)
+    '''
+    '''
+      ((_this) -> x()) @
+    '''
+  )

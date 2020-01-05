@@ -955,6 +955,24 @@ transformer = ({types: t}) ->
           return unless isSameMemberExpression left, right.left
           node.operator = "#{right.operator}="
           node.right = right.right
+    Program:
+      exit: (path) ->
+        {node: {body}, node} = path
+        do ->
+          return unless body.length is 1
+          [singleStatement] = body
+          return unless t.isExpressionStatement singleStatement
+          {expression: singleExpression} = singleStatement
+          return unless t.isUnaryExpression singleExpression, operator: 'do'
+          return unless t.isFunction singleExpression.argument
+          {argument: {params, body: functionBody}} = singleExpression
+          return unless params.length is 0
+          if t.isBlockStatement functionBody
+            node.body = functionBody.body
+          else if t.isStatement functionBody
+            node.body = [functionBody]
+          else
+            singleStatement.expression = functionBody
   )
 
 withLocation = (node, {after} = {}) -> (newNode) ->
