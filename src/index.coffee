@@ -527,8 +527,10 @@ transformer = ({types: t}) ->
     {parentPath: {node: parentNode}, parentPath, node, scope} = path
     grandparentNode = parentPath.parentPath?.node
     isStatementLevelIife = do ->
-      return no unless t.isCallExpression parentNode
-      return no unless node is parentNode.callee
+      return no unless (
+        (t.isCallExpression(parentNode) and node is parentNode.callee) or
+        t.isUnaryExpression parentNode, operator: 'do'
+      )
       return no unless t.isExpressionStatement grandparentNode
       yes
     return yes if isStatementLevelIife
@@ -598,6 +600,10 @@ transformer = ({types: t}) ->
       [..., lastStatement] = body.body
       return unless lastStatement?
       return if t.isReturnStatement lastStatement
+      return if (
+        t.isExpressionStatement(lastStatement) and
+        lastStatement.expression?.returns
+      )
       return if isReturnValueAlwaysIgnored path
       withLoc = withLocation body
       path
@@ -815,6 +821,7 @@ transformer = ({types: t}) ->
 
       if parentPath.isBlockStatement() and parentPath.parentPath.isFunction()
         if node is parentPath.node.body[parentPath.node.body.length - 1]
+          argument.returns = yes
           path.replaceWith withLocation(argument) t.expressionStatement argument
     BinaryExpression:
       enter: (path) ->
@@ -849,7 +856,8 @@ transformer = ({types: t}) ->
       enter: (path) ->
         {node: {left, right, operator}, node} = path
         node.operator = 'and' if operator is '&&'
-        node.operator = operator = 'or' if operator is '||'
+        node.operator = 'or' if operator is '||'
+        {operator} = node
         if couldBeIn node
           return path.replaceWith(
             withLocation(node)(
@@ -916,7 +924,9 @@ transformer = ({types: t}) ->
             )
           )
       exit: (path) ->
-        {node: {right}} = path
+        {node: {right, operator}, node} = path
+        node.operator = 'and' if operator is '&&'
+        node.operator = 'or' if operator is '||'
         if guardingAnd path
           return path.replaceWith right
         if guardingOr path

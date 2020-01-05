@@ -46,6 +46,7 @@ exports.override = ->
       exportKind: validateOptional assertOneOf 'type', 'value'
 
   defineType 'UnaryExpression',
+    visitor: ['argument']
     builder: ['operator', 'argument', 'prefix']
     fields:
       prefix:
