@@ -4,11 +4,12 @@ test 'iife with no args -> do', ->
   transformed(
     '''
       const y = function() {
-        x()
+        return x()
       }()
     '''
     '''
-      y = do -> x()
+      y = do ->
+        x()
     '''
   )
 
@@ -31,7 +32,9 @@ test "don't strip top-level iife with args", ->
       })(this)
     '''
     '''
-      ((_this) -> x()) @
+      ((_this) ->
+        x()
+      ) @
     '''
   )
 

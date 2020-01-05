@@ -20,7 +20,8 @@ test 'preserves getter + setter pair', ->
           'b'
           get: -> @_b
 
-          set: (val) -> @_b = val
+          set: (val) ->
+            @_b = val
         )
     '''
   )
@@ -58,7 +59,8 @@ test 'preserves just setter', ->
         Object.defineProperty(
           @::
           'b'
-          set: (val) -> @_b = val
+          set: (val) ->
+            @_b = val
         )
     '''
   )

@@ -16,7 +16,8 @@ test 'generates fat arrow if `this` is used', ->
       const x = () => f(this)
     '''
     '''
-      x = => f @
+      x = =>
+        f @
     '''
   )
 
@@ -39,11 +40,11 @@ describe 'hoisting named functions with preceding static references', ->
         var a = b()
 
         function b() {
-          console.log('here')
+          return 'here'
         }
       '''
       '''
-        b = -> console.log 'here'
+        b = -> 'here'
         a = b()
       '''
     )
@@ -55,13 +56,13 @@ describe 'hoisting named functions with preceding static references', ->
           var a = b()
 
           function b() {
-            console.log('here')
+            return 'here'
           }
         }
       '''
       '''
         x = ->
-          b = -> console.log 'here'
+          b = -> 'here'
           a = b()
       '''
     )
@@ -72,13 +73,14 @@ describe 'hoisting named functions with preceding static references', ->
         var a = () => b()
 
         function b() {
-          console.log('here')
+          return 'here'
         }
       '''
       '''
-        a = -> b()
+        a = ->
+          b()
 
-        b = -> console.log 'here'
+        b = -> 'here'
       '''
     )
 
@@ -94,7 +96,8 @@ describe 'hoisting named functions with preceding static references', ->
         }
       '''
       '''
-        b = -> console.log 'here'
+        b = ->
+          console.log 'here'
         if yes
           b()
       '''
@@ -115,7 +118,8 @@ describe 'hoisting named functions with preceding static references', ->
       '''
       '''
         a = ->
-          b = -> console.log 'here'
+          b = ->
+            console.log 'here'
           if yes
             b()
       '''
@@ -128,18 +132,18 @@ describe 'hoisting named functions with preceding static references', ->
         var c = d()
 
         function b() {
-          console.log('here')
+          return 'here'
         }
 
         function d() {
-          console.log('there')
+          return 'there'
         }
       '''
       '''
-        b = -> console.log 'here'
+        b = -> 'here'
 
         a = b()
-        d = -> console.log 'there'
+        d = -> 'there'
         c = d()
       '''
     )
@@ -155,3 +159,89 @@ test 'handles export default anonymous function', ->
       export default -> 1
     '''
   )
+
+describe 'return value', ->
+  test 'returns undefined for functions without return value', ->
+    transformed(
+      '''
+        const x = function() {
+          y()
+        }
+        doSomethingWith(x)
+      '''
+      '''
+        x = ->
+          y()
+          undefined
+        doSomethingWith x
+      '''
+    )
+
+  test "doesn't return undefined for unassigned do-iife functions without return value", ->
+    transformed(
+      '''
+        function b() {
+          (function() {
+            y()
+          })()
+        }
+      '''
+      '''
+        b = ->
+          do ->
+            y()
+      '''
+    )
+
+  test "doesn't return undefined for assigned functions whose calls' return values are all ignored", ->
+    transformed(
+      '''
+        function b() {
+          x()
+        }
+
+        b()
+      '''
+      '''
+        b = ->
+          x()
+
+        b()
+      '''
+    )
+
+  test "returns undefined for assigned functions not all of whose calls' return values are all ignored", ->
+    transformed(
+      '''
+        function b() {
+          x()
+        }
+
+        b()
+        x = b()
+      '''
+      '''
+        b = ->
+          x()
+          undefined
+
+        b()
+        x = b()
+      '''
+    )
+
+  test "doesn't returns undefined for constructor", ->
+    transformed(
+      '''
+        class A {
+          constructor() {
+            this.x = 1;
+          }
+        }
+      '''
+      '''
+        class A
+          constructor: ->
+            @x = 1
+      '''
+    )

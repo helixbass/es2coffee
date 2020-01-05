@@ -74,7 +74,7 @@ test 'renames shadowed var variable', ->
 
       f(() => {
         var x = 2
-        x * 2
+        return x * 2
       })
     '''
     '''
@@ -173,7 +173,8 @@ describe 'initialization', ->
         a = undefined
         b = undefined
 
-        do -> a = 1
+        do ->
+          a = 1
         f a, b
       '''
     )

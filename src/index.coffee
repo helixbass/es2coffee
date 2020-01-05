@@ -1,5 +1,6 @@
 # babylon = require 'babylon'
 babel = require '@babel/core'
+{default: Binding} = require '@babel/traverse/lib/scope/binding'
 prettier = require 'prettier'
 {mapValues, sortBy, flow} = require 'lodash/fp'
 {last, isArray, assign: extend, first} = require 'lodash'
@@ -189,10 +190,42 @@ transformer = ({types: t}) ->
       }
     )
 
-  getFunctionDeclarationAssignment = ({
-    node: {id, params, body, generator, async}
-    node
+  addBindingToScope = ({
+    scope: scopeOption
+    id
+    path
+    path: {scope = scopeOption}
+    oldBinding
   }) ->
+    binding = new Binding {
+      identifier: id
+      scope
+      path
+      kind: 'var'
+    }
+    if oldBinding?
+      for key in [
+        'constant'
+        'constantViolations'
+        'referencePaths'
+        'referenced'
+        'references'
+      ]
+        binding[key] = oldBinding[key]
+    scope.bindings[id.name] = binding
+
+  getFunctionDeclarationAssignment = ({
+    scope
+    path: {node: {id, params, body, generator, async}, node}
+    path
+    dontAddToScope
+  }) ->
+    if id? and not dontAddToScope
+      addBindingToScope {
+        scope
+        id
+        path
+      }
     functionExpression =
       withLocation(node, after: id)(
         t.functionExpression null, params, body, generator, async
@@ -490,19 +523,106 @@ transformer = ({types: t}) ->
     )
     yes
 
+  isReturnValueAlwaysIgnored = (path) ->
+    {parentPath: {node: parentNode}, parentPath, node, scope} = path
+    grandparentNode = parentPath.parentPath?.node
+    isStatementLevelIife = do ->
+      return no unless t.isCallExpression parentNode
+      return no unless node is parentNode.callee
+      return no unless t.isExpressionStatement grandparentNode
+      yes
+    return yes if isStatementLevelIife
+    isSetter = do ->
+      return yes if t.isClassMethod node, kind: 'set'
+      return no unless t.isObjectProperty parentNode
+      {key} = parentNode
+      return no unless t.isIdentifier key, name: 'set'
+      # could check that we're an argument to Object.defintProperty()
+      # but perhaps just being named "set()" is good enough for now
+      yes
+    return yes if isSetter
+    return yes if t.isClassMethod node, kind: 'constructor'
+    assignedToVariable = do ->
+      if node.id
+        return node.id
+      if t.isVariableDeclarator parentNode
+        {id, init} = parentNode
+        return no unless node is init
+        return no unless t.isIdentifier id
+        return id
+      if t.isAssignmentExpression parentNode
+        {left, right} = parentNode
+        return no unless node is right
+        return no unless t.isIdentifier left
+        return left
+      no
+    if assignedToVariable
+      {referencePaths} = scope.getBinding assignedToVariable.name
+      return yes unless referencePaths.length
+      for {node, parentPath: {node: parentNode}, parentPath} in referencePaths
+        return no unless t.isCallExpression parentNode
+        return no unless node is parentNode.callee
+        {parentPath: {node: grandparentNode}} = parentPath
+        return no unless t.isExpressionStatement grandparentNode
+      return yes
+    no
+
+  enterFunction = (path) ->
+    {node: {body}, node} = path
+    thisContextsStack.push {path}
+    node.hasIndentedBody = do ->
+      singleExpression = null
+      if t.isBlockStatement body
+        return yes unless body.body.length is 1
+        [singleStatement] = body.body
+        if t.isExpressionStatement singleStatement
+          singleExpression = singleStatement.expression
+        else if t.isReturnStatement singleStatement
+          singleExpression = singleStatement.argument
+        else
+          return no
+      else
+        singleExpression = body
+      return no if t.isNumericLiteral singleExpression
+      return no if t.isStringLiteral singleExpression
+      return no if t.isIdentifier singleExpression
+      return no if do ->
+        return no unless t.isMemberExpression singleExpression
+        {object, property} = singleExpression
+        return no unless t.isIdentifier(object) or t.isThisExpression object
+        return no unless t.isIdentifier property
+        yes
+      yes
+    do ->
+      return unless t.isBlockStatement body
+      [..., lastStatement] = body.body
+      return unless lastStatement?
+      return if t.isReturnStatement lastStatement
+      return if isReturnValueAlwaysIgnored path
+      withLoc = withLocation body
+      path
+        .get('body')
+        .pushContainer(
+          'body'
+          withLoc t.returnStatement withLoc t.identifier 'undefined'
+        )
+
   visitor: withNullReturnValues(
     ExportDefaultDeclaration: (path) ->
-      {node: {declaration}, node} = path
+      {node: {declaration}, node, scope} = path
       if declaration?.type is 'FunctionDeclaration'
         return path.replaceWith(
           withLocation(node)(
             t.exportDefaultDeclaration(
-              getFunctionDeclarationAssignment node: declaration
+              getFunctionDeclarationAssignment {
+                path: path.get 'declaration'
+                scope
+              }
             )
           )
         )
     ExportNamedDeclaration: (path) ->
-      {node: {declaration, specifiers, source}, node} = path
+      {node: {declaration, specifiers, source}, node, scope} = path
       if declaration?.type is 'VariableDeclaration'
         {declarations: [{id, init}]} = declaration
         return path.replaceWith(
@@ -518,7 +638,10 @@ transformer = ({types: t}) ->
         return path.replaceWith(
           withLocation(node)(
             t.exportNamedDeclaration(
-              getFunctionDeclarationAssignment node: declaration
+              getFunctionDeclarationAssignment {
+                path: path.get 'declaration'
+                scope
+              }
               specifiers
               source
             )
@@ -562,11 +685,13 @@ transformer = ({types: t}) ->
     FunctionDeclaration:
       enter: (path) ->
         {node: {id}, node, scope} = path
-        thisContextsStack.push {path}
+        # enterFunction path
 
         functionAssignment =
           withLocation(node)(
-            t.expressionStatement getFunctionDeclarationAssignment {node}
+            t.expressionStatement(
+              getFunctionDeclarationAssignment {path, dontAddToScope: yes}
+            )
           )
         earliestPrecedingReference = null
         if id?
@@ -591,6 +716,8 @@ transformer = ({types: t}) ->
               path: referencePath
               functionParentPath: referenceFunctionParentPath
               statementParentPath: referenceStatementParentPath
+        newAssignmentPath = null
+        oldBinding = (scope.getBinding id.name if id?)
         if earliestPrecedingReference?
           # earliestPrecedingReference.statementParentPath.insertBefore(
           #   functionAssignment
@@ -610,21 +737,24 @@ transformer = ({types: t}) ->
               statementNode.end >= referenceStart
             )
               path.remove()
-              statementPath.insertBefore functionAssignment
+              [newAssignmentPath] = statementPath.insertBefore(
+                functionAssignment
+              )
               break
         else
-          path.replaceWith functionAssignment
+          [newAssignmentPath] = path.replaceWith functionAssignment
+        addBindingToScope {id, path: newAssignmentPath, oldBinding} if id?
       exit: ->
         thisContextsStack.pop()
     FunctionExpression:
       enter: (path) ->
-        thisContextsStack.push {path}
+        enterFunction path
       exit: ->
         thisContextsStack.pop()
     ArrowFunctionExpression:
       enter: (path) ->
         {node: {body}, node} = path
-        thisContextsStack.push {path}
+        enterFunction path
         unless t.isBlockStatement body
           node.body =
             withLocation(body)(
@@ -639,6 +769,7 @@ transformer = ({types: t}) ->
     ClassExpression: visitClass
     ClassMethod: (path) ->
       {node: {kind, key, params, body, generator, async}, node} = path
+      enterFunction path
       if kind in ['get', 'set']
         klass = last classesStack
         klass.getterSetterProperties ?= {}
