@@ -3,6 +3,7 @@ babel = require '@babel/core'
 prettier = require 'prettier'
 {mapValues, sortBy, flow} = require 'lodash/fp'
 {last, isArray, assign: extend, first} = require 'lodash'
+{singular} = require 'pluralize'
 
 {override: overrideBabelTypes} = require './override-babel-types'
 
@@ -278,6 +279,11 @@ transformer = ({types: t}) ->
   orDefault = (defaultVal) -> (f) -> (...args) ->
     f(...args) ? defaultVal
 
+  isNameAlreadyUsedAnywhere = ({scope, name}) ->
+    return yes if scope.getProgramParent().references[name]
+    return yes if scope.hasBinding name
+    no
+
   compileForLoop = (path) ->
     {node: {init, test, update, body}, node, scope} = path
     isLengthMemberExpression = (_node) ->
@@ -364,7 +370,13 @@ transformer = ({types: t}) ->
       return unless t.isIdentifier test.right, name: lengthVariable.name
     return unless t.isUpdateExpression update, operator: '++'
     return unless t.isIdentifier update.argument, name: id.name
+    isItemGrabbingMemberExpression = (_node) ->
+      return unless t.isMemberExpression _node, computed: yes
+      return unless t.isIdentifier _node.object, name: array.name
+      return unless t.isIdentifier _node.property, name: id.name
+      yes
     itemVariable = null
+    itemVariableInitialization = null
     grabsItem = do ->
       return unless t.isBlockStatement body
       return unless body.body.length > 1
@@ -375,17 +387,12 @@ transformer = ({types: t}) ->
         id: itemVariable
         init: itemVariableInitialization
       } = firstStatement.declarations[0]
-      return unless (
-        t.isMemberExpression itemVariableInitialization, computed: yes
-      )
-      return unless (
-        t.isIdentifier itemVariableInitialization.object, name: array.name
-      )
-      return unless (
-        t.isIdentifier itemVariableInitialization.property, name: id.name
-      )
+      unless isItemGrabbingMemberExpression itemVariableInitialization
+        itemVariable ###:### = null
+        return
       yes
 
+    originalBodyStart = body.start
     adjustBlockStatementLocationData path.get 'body' if t.isBlockStatement body
     getGuard = ->
       guards = []
@@ -405,10 +412,35 @@ transformer = ({types: t}) ->
         return returnGuard() if singleStatement.alternate?
         node.body = singleStatement.consequent
         guards.push singleStatement.test
-    guard = getGuard()
-    {body} = node
     withLoc = withLocation node
-    unless grabsItem
+    indexVariableBinding = scope.getBinding id.name
+    numItemGrabbingMemberExpressions = 0
+    for referencePath in indexVariableBinding.referencePaths when (
+      referencePath.node.start >= originalBodyStart
+    )
+      {parentPath, parentPath: {node: parentNode}} = referencePath
+      if (
+        isItemGrabbingMemberExpression(parentNode) and
+        parentNode isnt itemVariableInitialization
+      )
+        itemVariable ?= withLoc(
+          t.identifier do ->
+            singularItemName = singular array.name
+            singularItemName = "#{array.name}Item" if (
+              singularItemName is array.name
+            )
+            return singularItemName unless isNameAlreadyUsedAnywhere {
+              scope
+              name: singularItemName
+            }
+            scope.generateUid singularItemName
+        )
+        parentPath.replaceWith itemVariable
+        numItemGrabbingMemberExpressions++
+    guard = null
+    unless grabsItem or numItemGrabbingMemberExpressions
+      guard = getGuard()
+      {body} = node
       path.replaceWith(
         withLoc {
           type: 'For'
@@ -439,10 +471,10 @@ transformer = ({types: t}) ->
       )
       return yes
 
-    path.get('body.body.0').remove()
     shouldExposeIndexVariable = do ->
-      indexVariableBinding = scope.getBinding id.name
-      indexVariableBinding.referencePaths.length > 3
+      indexVariableBinding.referencePaths.length >
+      2 + (if grabsItem then 1 else 0) + numItemGrabbingMemberExpressions
+    path.get('body.body.0').remove() if grabsItem
     guard = getGuard()
     {body} = node
     path.replaceWith(

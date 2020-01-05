@@ -32,6 +32,9 @@ rules:
   coffee/spaced-comment: off
   coffee/guard-for-in: off
   no-continue: off
+  no-plusplus: off
+  coffee/complexity: off
+  coffee/no-implicit-coercion: off
 env:
   node: true
   jest: true

@@ -122,6 +122,74 @@ describe 'for loops', ->
       '''
     )
 
+  describe 'item references', ->
+    test 'replaces multiple item references without item assignment', ->
+      transformed(
+        '''
+          for (let i = 0; i < children.length; i++) {
+            const child = node[children[i]];
+            if (isProperty(type, children[i])) {
+              this.visit(child);
+            }
+          }
+        '''
+        '''
+          for _child in children
+            child = node[_child]
+            if isProperty type, _child
+              @visit child
+        '''
+      )
+
+    test 'preserves index if it has non-item references', ->
+      transformed(
+        '''
+          for (let i = 0; i < items.length; i++) {
+            b(items[i]);
+            x(i);
+          }
+        '''
+        '''
+          for item, i in items
+            b item
+            x i
+        '''
+      )
+
+    test 'replaces item references with item assignment', ->
+      transformed(
+        '''
+          for (let i = 0; i < items.length; i++) {
+            const itemm = items[i];
+            x(itemm);
+            y(items[i]);
+          }
+        '''
+        '''
+          for itemm in items
+            x itemm
+            y itemm
+        '''
+      )
+
+    test 'preserves index + replaces item references with item assignment', ->
+      transformed(
+        '''
+          for (let i = 0; i < items.length; i++) {
+            const itemm = items[i];
+            x(itemm);
+            y(items[i]);
+            z(i);
+          }
+        '''
+        '''
+          for itemm, i in items
+            x itemm
+            y itemm
+            z i
+        '''
+      )
+
   describe 'length caching', ->
     describe 'loop-declared variables', ->
       test 'for loop that caches length', ->
