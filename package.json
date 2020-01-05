@@ -5,7 +5,7 @@
   "bin": {
     "es2coffee": "./bin/es2coffee.js"
   },
-  "main": "build",
+  "main": "lib/index.js",
   "repository": "https://github.com/helixbass/es2coffee",
   "author": "Julian Rosse <@helixbass>",
   "license": "MIT",
@@ -16,17 +16,21 @@
     "@babel/core": "^7.7.7",
     "@babel/parser": "^7.7.7",
     "lodash": "^4.17.10",
+    "minimist": "^1.2.0",
     "pluralize": "^8.0.0",
     "prettier": "github:helixbass/prettier#b93cdfcf",
     "prettier-plugin-coffeescript": "^0.1.4"
   },
   "scripts": {
-    "build": "coffee -o build/ -c src",
-    "watch": "coffee --watch -o build/ -c src",
+    "build": "coffee -o lib/ -c src/",
+    "watch": "coffee -o lib/ -wc src/",
     "prepublish": "npm run build",
     "lint": "eslint 'src/**/*.coffee'",
     "test": "jest"
   },
+  "files": [
+    "lib"
+  ],
   "devDependencies": {
     "coffeescript": "^2.5.0",
     "eslint": "^6.0.0",

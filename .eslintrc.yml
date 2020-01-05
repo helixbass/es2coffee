@@ -5,7 +5,6 @@ extends:
   - plugin:coffee/prettier-run-as-rule
 rules:
   coffee/prefer-destructuring: [error, {object: true}]
-  no-unused-vars: error
   no-undef: error
   coffee/id-length: off
   max-lines: off
@@ -37,6 +36,8 @@ rules:
   coffee/no-implicit-coercion: off
   coffee/no-nested-interpolation: off
   coffee/no-cond-assign: off
+  no-process-exit: off
+  no-bitwise: off
 env:
   node: true
   jest: true
