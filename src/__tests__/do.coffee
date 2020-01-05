@@ -34,3 +34,17 @@ test "don't strip top-level iife with args", ->
       ((_this) -> x()) @
     '''
   )
+
+test 'preserve directives when stripping top-level iife', ->
+  transformed(
+    '''
+      (function() {
+        'use strict'
+        x()
+      })()
+    '''
+    '''
+      'use strict'
+      x()
+    '''
+  )

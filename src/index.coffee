@@ -957,7 +957,7 @@ transformer = ({types: t}) ->
           node.right = right.right
     Program:
       exit: (path) ->
-        {node: {body}, node} = path
+        {node: {body, directives}, node} = path
         do ->
           return unless body.length is 1
           [singleStatement] = body
@@ -969,6 +969,10 @@ transformer = ({types: t}) ->
           return unless params.length is 0
           if t.isBlockStatement functionBody
             node.body = functionBody.body
+            node.directives = [
+              ...(directives ? [])
+              ...(functionBody.directives ? [])
+            ]
           else if t.isStatement functionBody
             node.body = [functionBody]
           else
