@@ -75,3 +75,13 @@ test 'generates soak from guarding ternary', ->
       commentExpectedIndents?.expectedIndent ? commentOptionalExpectedIndents[0]
     '''
   )
+
+test 'generates soak from guarding comparison', ->
+  transformed(
+    '''
+      secondSpecifier && secondSpecifier.type === 'ImportNamespaceSpecifier'
+    '''
+    '''
+      secondSpecifier?.type is 'ImportNamespaceSpecifier'
+    '''
+  )

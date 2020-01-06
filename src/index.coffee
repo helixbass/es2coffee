@@ -142,6 +142,8 @@ transformer = ({types: t}) ->
       if current.operator is 'in'
         return no unless t.isArrayExpression current.right
         current = current.left
+      else if current.operator in ['===', 'is']
+        current = current.left
       else
         return no
     loop
@@ -857,6 +859,8 @@ transformer = ({types: t}) ->
             else
               withLocation(node) t.unaryExpression 'not', existence
           )
+        if guardingAnd path
+          return path.replaceWith right
 
     ThisExpression: (path) ->
       {node} = path
