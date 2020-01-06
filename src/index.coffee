@@ -130,10 +130,18 @@ transformer = ({types: t}) ->
       isSameMemberExpression left.left, right.left
 
   isGuard = (left, right) ->
+    if left.type is 'UnaryExpression'
+      return no unless left.operator is '?'
+      # eslint-disable-next-line no-param-reassign
+      left = left.argument
     return no unless t.isIdentifier(left) or t.isMemberExpression left
     current = right
     parent = null
     found = no
+    if current.type is 'BinaryExpression'
+      return no unless current.operator is 'in'
+      return no unless t.isArrayExpression current.right
+      current = current.left
     loop
       nextParent = current
       switch current.type

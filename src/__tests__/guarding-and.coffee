@@ -50,3 +50,15 @@ test 'inverts and generates soak from guarding or', ->
 test 'multiple guarding ors', ->
   transformed '!a.b || !a.b.c || !a.b.c.d', 'not a.b?.c?.d'
   transformed '!a.b || !a.b.c || !a.b.c()', 'not a.b?.c?()'
+
+test 'generates soak from guarding and + in', ->
+  transformed(
+    "a && (a.type === 'HTMLText' || a.type === 'HTMLRCDataText')"
+    "a?.type in ['HTMLText', 'HTMLRCDataText']"
+  )
+
+test 'generates soak from guarding existence and + in', ->
+  transformed(
+    "a != null && (a.type === 'HTMLText' || a.type === 'HTMLRCDataText')"
+    "a?.type in ['HTMLText', 'HTMLRCDataText']"
+  )
