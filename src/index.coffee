@@ -958,7 +958,7 @@ transformer = ({types: t}) ->
           if condition consequent
             return consequent
         singleReturnContinueOrBreak = isSingleBody (expr) ->
-          t.isReturnStatement(expr) or
+          (t.isReturnStatement(expr) and not t.isFunction(expr.argument)) or
           t.isContinueStatement(expr) or
           t.isBreakStatement expr
 
