@@ -139,9 +139,11 @@ transformer = ({types: t}) ->
     parent = null
     found = no
     if current.type is 'BinaryExpression'
-      return no unless current.operator is 'in'
-      return no unless t.isArrayExpression current.right
-      current = current.left
+      if current.operator is 'in'
+        return no unless t.isArrayExpression current.right
+        current = current.left
+      else
+        return no
     loop
       nextParent = current
       switch current.type
@@ -153,6 +155,9 @@ transformer = ({types: t}) ->
           current = current.object
         when 'CallExpression'
           current = current.callee
+        when 'UnaryExpression'
+          return no unless current.operator is '?'
+          current = current.argument
         else
           return no
       if found

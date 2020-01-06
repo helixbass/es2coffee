@@ -62,3 +62,6 @@ test 'generates soak from guarding existence and + in', ->
     "a != null && (a.type === 'HTMLText' || a.type === 'HTMLRCDataText')"
     "a?.type in ['HTMLText', 'HTMLRCDataText']"
   )
+
+test 'generates soak from double guarding existence', ->
+  transformed 'a != null && a.b != null', 'a?.b?'
