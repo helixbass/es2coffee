@@ -975,7 +975,11 @@ transformer = ({types: t}) ->
           if isGuard test, consequent.body[0].expression
             return path.replaceWith consequent.body[0]
     ConditionalExpression: (path) ->
-      {node} = path
+      {node, node: {test, consequent, alternate}} = path
+      withLoc = withLocation node
+      if isGuard test, consequent
+        path.replaceWith withLoc t.logicalExpression '?', consequent, alternate
+        return
       notToUnless node
     BooleanLiteral: (path) ->
       {node} = path

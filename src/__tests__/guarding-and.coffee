@@ -65,3 +65,13 @@ test 'generates soak from guarding existence and + in', ->
 
 test 'generates soak from double guarding existence', ->
   transformed 'a != null && a.b != null', 'a?.b?'
+
+test 'generates soak from guarding ternary', ->
+  transformed(
+    '''
+      commentExpectedIndents ? commentExpectedIndents.expectedIndent : commentOptionalExpectedIndents[0]
+    '''
+    '''
+      commentExpectedIndents?.expectedIndent ? commentOptionalExpectedIndents[0]
+    '''
+  )
