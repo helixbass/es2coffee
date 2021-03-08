@@ -13,8 +13,9 @@
     "coffeescript"
   ],
   "dependencies": {
-    "@babel/core": "^7.7.7",
-    "@babel/parser": "^7.7.7",
+    "@babel/core": "^7.12.17",
+    "@babel/parser": "^7.12.17",
+    "@babel/preset-typescript": "^7.12.17",
     "lodash": "^4.17.10",
     "minimist": "^1.2.0",
     "pluralize": "^8.0.0",

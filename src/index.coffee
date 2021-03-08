@@ -1184,6 +1184,8 @@ transform = (input) ->
     code: no
     ast: yes
     parserOpts: ranges: yes
+    presets: [['@babel/preset-typescript', {allExtensions: true, isTSX: true}]]
+    filename: 'tmp.ts'
 
   # dump {transformed}
   if (
